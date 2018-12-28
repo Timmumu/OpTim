@@ -2,11 +2,9 @@
 // Effects.cpp by Frank Luna (C) 2011 All Rights Reserved.
 //***************************************************************************************
 
-#include "OptimMain.h"
 #include "Effects.h"
 
 #pragma region Effect
-
 Effect::Effect(ID3D11Device* device, const std::wstring& filename)
 	: mFX(0)
 {
@@ -20,10 +18,9 @@ Effect::Effect(ID3D11Device* device, const std::wstring& filename)
 	fin.read(&compiledShader[0], size);
 	fin.close();
 
+	//simple checker
 	ThrowIfFailed(D3DX11CreateEffectFromMemory(&compiledShader[0], size, 0, device, &mFX));
-	//compiledShader->GetBufferPointer(),
-	//compiledShader->GetBufferSize(),
-	//0, md3dDevice, &mFX));
+	//HR(D3DX11CreateEffectFromMemory(&compiledShader[0], size, 0, device, &mFX));
 }	
 
 Effect::~Effect()
@@ -79,6 +76,39 @@ InstancedBasicEffect::InstancedBasicEffect(ID3D11Device* device, const std::wstr
 
 InstancedBasicEffect::~InstancedBasicEffect()
 {
+	ReleaseCom(Light1Tech);
+	ReleaseCom(Light2Tech);
+	ReleaseCom(Light3Tech);
+	ReleaseCom(Light0TexTech)
+	ReleaseCom(Light1TexTech)
+	ReleaseCom(Light2TexTech)
+	ReleaseCom(Light3TexTech)
+	ReleaseCom(Light0TexAlphaClipTech)
+	ReleaseCom(Light1TexAlphaClipTech)
+	ReleaseCom(Light2TexAlphaClipTech)
+	ReleaseCom(Light3TexAlphaClipTech)
+	ReleaseCom(Light1FogTech)
+	ReleaseCom(Light2FogTech)
+	ReleaseCom(Light3FogTech)
+	ReleaseCom(Light0TexFogTech)
+	ReleaseCom(Light1TexFogTech)
+	ReleaseCom(Light2TexFogTech)
+	ReleaseCom(Light3TexFogTech)
+	ReleaseCom(Light0TexAlphaClipFogTech)
+	ReleaseCom(Light1TexAlphaClipFogTech)
+	ReleaseCom(Light2TexAlphaClipFogTech)
+	ReleaseCom(Light3TexAlphaClipFogTech)
+	ReleaseCom(ViewProj)
+	ReleaseCom(World)
+	ReleaseCom(WorldInvTranspose)
+	ReleaseCom(TexTransform)
+	ReleaseCom(EyePosW)
+	ReleaseCom(FogColor)
+	ReleaseCom(FogStart)
+	ReleaseCom(FogRange)
+	ReleaseCom(DirLights)
+	ReleaseCom(Mat)
+	ReleaseCom(DiffuseMap)
 }
 #pragma endregion
 
@@ -89,12 +119,12 @@ InstancedBasicEffect* Effects::InstancedBasicFX = 0;
 void Effects::InitAll(ID3D11Device* device)
 {
 	InstancedBasicFX = new InstancedBasicEffect(device, L"FX/InstancedBasic.fxo");
-	
 }
 
 void Effects::DestroyAll()
 {
 	SafeDelete(InstancedBasicFX);
+
 }
 #pragma endregion
  

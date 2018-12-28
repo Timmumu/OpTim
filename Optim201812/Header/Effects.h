@@ -29,6 +29,8 @@ protected:
 #pragma endregion
 
 #pragma region InstancedBasicEffect
+
+
 class InstancedBasicEffect : public Effect
 {
 public:

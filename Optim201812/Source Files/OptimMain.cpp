@@ -40,26 +40,25 @@ struct InstancedData
 
 struct LineDirectx
 {
-	std::string LineName, Story;
-	string LineStart, LineEnd;
-	UINT LineSIndex;
-	UINT LineEIndex;
+	std::string LineName, Story ;
+	std::string LineStart , LineEnd;
+	UINT LineSIndex = 0;
+	UINT LineEIndex = 0;
 };
 
-// 3 types of variables: string, UINT and float
-struct Story { std::string StoryName;  float StoryHeight = 0.0; float TotalHeight = 0.0; };
-struct PointCoord { std::string PtName; float PtX = 0.0; float PtY = 0.0; };
-struct Point3D { std::string PtName; float PtX; float PtY; float PtZ; };
-struct LineConnect { std::string LineName, LineType; string LineStart, LineEnd; UINT LineFloor; };
-struct LineAssign { std::string LineName, Story; string LineStart, LineEnd; };
-struct MaterialProp { std::string Name, Mass, Weight, ModulusE, PossionR; };
+// 3 types of variables: string, UINT and float, declare once, but initialization is required for each
+struct Story { std::string StoryName;  float StoryHeight = 0.0; float TotalHeight = 0.0f; };
+struct PointCoord { std::string PtName; float PtX = 0.0f; float PtY = 0.0f; };
+struct Point3D { std::string PtName; float PtX = 0.0f; float PtY = 0.0f; float PtZ = 0.0f; };
+struct LineConnect { std::string LineName, LineType; string LineStart; string LineEnd ; UINT LineFloor = 0; };
+struct LineAssign { std::string LineName; string Story; string LineStart; string LineEnd; };
+struct MaterialProp { std::string Name , Mass , Weight, ModulusE , PossionR ; };
 
 //Beam Forces
 struct Beam 
 {
-	std::string Floor, Name, LdCase;
-	float Loc = NULL;
-	float P, V2, V3, T, M2, M3;
+	std::string Floor = NULL, Name = NULL, LdCase = NULL;
+	float Loc = 0.0f, P = 0.0f, V2 = 0.0f, V3 = 0.0f, T = 0.0f, M2 = 0.0f, M3 = 0.0f;
 };
 
 //用class定义派生类，默认的继承方式是private
@@ -100,9 +99,9 @@ private:
 	void ImportDLLL_MMAP();
 
 private:
-	ID3D11Buffer * mTargetVB;
-	ID3D11Buffer* mTargetIB;
-	ID3D11Buffer* mInstancedBuffer;			//for 动态缓冲
+	ID3D11Buffer* mTargetVB = 0;
+	ID3D11Buffer* mTargetIB = 0;
+	ID3D11Buffer* mInstancedBuffer = 0;			//for 动态缓冲
 
 	// Bounding box of the skull.
 	XNA::AxisAlignedBox mSkullBox;
@@ -138,12 +137,14 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, in
 
 	//_CrtSetBreakAlloc(148); //Set breakpoint to locate the memory leak code's line 
 
+	//declare theApp
 	OptimMain theApp(hInstance);
 
 	if (!theApp.Init())
-
+	{
+		OutputDebugStringW(L" theApp.Init() failed.");
 		return 0;
-
+	}
 	return theApp.Run();
 }
 
@@ -163,11 +164,11 @@ OptimMain::OptimMain(HINSTANCE hInstance)
 
 	mCam.SetPosition(0.0f, 2.0f, -15.0f);
 
-	XMMATRIX I = XMMatrixIdentity();
+	XMMATRIX I = DirectX::XMMatrixIdentity();
 
-	XMMATRIX skullScale = XMMatrixScaling(0.5f, 0.5f, 0.5f);
-	XMMATRIX skullOffset = XMMatrixTranslation(0.0f, 1.0f, 0.0f);
-	DirectX::XMStoreFloat4x4(&mSkullWorld, XMMatrixMultiply(skullScale, skullOffset));
+	XMMATRIX skullScale = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.5f);
+	XMMATRIX skullOffset = DirectX::XMMatrixTranslation(0.0f, 1.0f, 0.0f);
+	DirectX::XMStoreFloat4x4(&mSkullWorld, DirectX::XMMatrixMultiply(skullScale, skullOffset));
 
 	mDirLights[0].Ambient = XMFLOAT4(0.2f, 0.2f, 0.2f, 1.0f);
 	mDirLights[0].Diffuse = XMFLOAT4(0.5f, 0.5f, 0.5f, 1.0f);
@@ -201,14 +202,14 @@ OptimMain::~OptimMain()
 
 bool OptimMain::Init()
 {
-	if (!D3DApp::Init())
-		return false;
+	if (!D3DApp::Init()) return false;
 
-	// Must init Effects first since InputLayouts depend on shader signatures.
+	// Must init Effects in prior to InputLayouts, the later depends on Effects' shader signatures.
 	Effects::InitAll(md3dDevice);
 	InputLayouts::InitAll(md3dDevice);
 
 	BuildInstancedBuffer();
+		//or
 	//StructureGeometryBuffers_fread();
 
 	return true;
@@ -270,8 +271,8 @@ void OptimMain::UpdateScene(float dt)
 
 	if (mFrustumCullingEnabled)
 	{
-		XMVECTOR detView = XMMatrixDeterminant(mCam.View());
-		XMMATRIX invView = XMMatrixInverse(&detView, mCam.View());
+		XMVECTOR detView = DirectX::XMMatrixDeterminant(mCam.View());
+		XMMATRIX invView = DirectX::XMMatrixInverse(&detView, mCam.View());
 
 		D3D11_MAPPED_SUBRESOURCE mappedData;
 		md3dImmediateContext->Map(mInstancedBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
@@ -281,16 +282,16 @@ void OptimMain::UpdateScene(float dt)
 		for (UINT i = 0; i < mInstancedData.size(); ++i)
 		{
 			XMMATRIX W = DirectX::XMLoadFloat4x4(&mInstancedData[i].World);
-			XMMATRIX invWorld = XMMatrixInverse(&XMMatrixDeterminant(W), W);
+			XMMATRIX invWorld = DirectX::XMMatrixInverse(&DirectX::XMMatrixDeterminant(W), W);
 
 			// View space to the object's local space.
-			XMMATRIX toLocal = XMMatrixMultiply(invView, invWorld);
+			XMMATRIX toLocal = DirectX::XMMatrixMultiply(invView, invWorld);
 
 			// Decompose the matrix into its individual parts.
 			XMVECTOR scale;
 			XMVECTOR rotQuat;
 			XMVECTOR translation;
-			XMMatrixDecompose(&scale, &rotQuat, &translation, toLocal);
+			DirectX::XMMatrixDecompose(&scale, &rotQuat, &translation, toLocal);
 
 			// Transform the camera frustum from view space to the object's local space.
 			XNA::Frustum localspaceFrustum;
@@ -353,7 +354,7 @@ void OptimMain::DrawScene()
 
 	D3DX11_TECHNIQUE_DESC techDesc;
 	activeTech->GetDesc(&techDesc);
-	for (UINT p = 0; p < techDesc.Passes; ++p)
+	for (int32_t p = 0; p < techDesc.Passes; ++p)		//passes is int32_t, just to be consistenet for <
 	{
 		md3dImmediateContext->IASetVertexBuffers(0, 2, vbs, stride, offset);
 		md3dImmediateContext->IASetIndexBuffer(mTargetIB, DXGI_FORMAT_R32_UINT, 0);
@@ -543,8 +544,7 @@ void OptimMain::StructureGeometryBuffers_ifstream()
 	}
 	else
 	{	
-		
-
+	
 		std::string TextHandler;
 		std::ifstream SM_read(FileNameTXT);
 
@@ -772,7 +772,7 @@ void OptimMain::StructureGeometryBuffers_ifstream()
 	}
 
 	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-	float time_sec = (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count()); //can use chrono::microseconds>
+	__int64 time_sec = (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count()); //can use chrono::microseconds>
 	fout << "Time elapsed = " << time_sec / 1000 << " s " << std::endl;
 	fout.close();
 

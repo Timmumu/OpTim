@@ -61,11 +61,11 @@ protected:
 	HWND      mhMainWnd;
 	HWND	  DirectHwnd;
 
-	bool      mAppPaused;
-	bool      mMinimized;
-	bool      mMaximized;
-	bool      mResizing;
-	UINT      m4xMsaaQuality;
+	bool      mAppPaused = false;
+	bool      mMinimized = false;
+	bool      mMaximized = false;
+	bool      mResizing = false;
+	UINT      m4xMsaaQuality = 0;
 
 	GameTimer mTimer;
 
@@ -80,7 +80,7 @@ protected:
 	// Derived class should set these in derived constructor to customize starting values.
 	std::wstring mMainWndCaption;
 	D3D_DRIVER_TYPE md3dDriverType;
-	int mClientWidth;
-	int mClientHeight;
-	bool mEnable4xMsaa;
+	int mClientWidth = 0;
+	int mClientHeight = 0;
+	bool mEnable4xMsaa = false;
 };

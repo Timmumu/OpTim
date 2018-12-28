@@ -60,18 +60,12 @@
     <ClInclude Include="Header\d3dx11effect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Header\d3dxGlobal.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common\Camera.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="Common\d3dUtil.cpp">
-      <Filter>Common</Filter>
-    </ClCompile>
-    <ClCompile Include="Common\Effects.cpp">
       <Filter>Common</Filter>
     </ClCompile>
     <ClCompile Include="Common\GameTimer.cpp">
@@ -118,6 +112,7 @@
       <Filter>FX</Filter>
     </None>
     <None Include="Resource Files\Optim.aps" />
+    <None Include="OptimDemo.xmind" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="FX\InstancedBasic.fx">

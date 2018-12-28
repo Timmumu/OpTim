@@ -22,9 +22,9 @@ namespace XNA
 		XMVECTOR C;
 
 		// Duplicate the fourth element from the first element.
-		C = XMVectorSwizzle(V, 0, 1, 2, 0);
+		C = DirectX::XMVectorSwizzle(V, 0, 1, 2, 0);
 
-		return XMComparisonAnyTrue(XMVector4EqualIntR(C, XMVectorTrueInt()));
+		return XMComparisonAnyTrue(XMVector4EqualIntR(C, DirectX::XMVectorTrueInt()));
 	}
 
 	VOID ComputeFrustumFromProjection(Frustum* pOut, XMMATRIX* pProjection)
@@ -53,17 +53,17 @@ namespace XNA
 		for (INT i = 0; i < 6; i++)
 		{
 			// Transform point.
-			Points[i] = XMVector4Transform(HomogenousPoints[i], matInverse);
+			Points[i] = DirectX::XMVector4Transform(HomogenousPoints[i], matInverse);
 		}
 
 		pOut->Origin = DirectX::XMFLOAT3(0.0f, 0.0f, 0.0f);
 		pOut->Orientation = DirectX::XMFLOAT4(0.0f, 0.0f, 0.0f, 1.0f);
 
 		// Compute the slopes.
-		Points[0] = Points[0] * DirectX::XMVectorReciprocal(XMVectorSplatZ(Points[0]));
-		Points[1] = Points[1] * DirectX::XMVectorReciprocal(XMVectorSplatZ(Points[1]));
-		Points[2] = Points[2] * DirectX::XMVectorReciprocal(XMVectorSplatZ(Points[2]));
-		Points[3] = Points[3] * DirectX::XMVectorReciprocal(XMVectorSplatZ(Points[3]));
+		Points[0] = Points[0] * DirectX::XMVectorReciprocal(DirectX::XMVectorSplatZ(Points[0]));
+		Points[1] = Points[1] * DirectX::XMVectorReciprocal(DirectX::XMVectorSplatZ(Points[1]));
+		Points[2] = Points[2] * DirectX::XMVectorReciprocal(DirectX::XMVectorSplatZ(Points[2]));
+		Points[3] = Points[3] * DirectX::XMVectorReciprocal(DirectX::XMVectorSplatZ(Points[3]));
 
 		pOut->RightSlope = DirectX::XMVectorGetX(Points[0]);
 		pOut->LeftSlope = DirectX::XMVectorGetX(Points[1]);

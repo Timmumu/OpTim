@@ -122,18 +122,17 @@ D3DApp::D3DApp(HINSTANCE hInstance)
 }
 
 D3DApp::~D3DApp()
-{
+{	
+	//if (mRenderTargetView) mRenderTargetView->Release();
+
 	ReleaseCom(mRenderTargetView);
 	ReleaseCom(mDepthStencilView);
 	ReleaseCom(mSwapChain);
 	ReleaseCom(mDepthStencilBuffer);
-
-	// Restore all default settings.
-	if (md3dImmediateContext)
-		md3dImmediateContext->ClearState();
-
 	ReleaseCom(md3dImmediateContext);
 	ReleaseCom(md3dDevice);
+
+	// Restore all default settings.
 }
 
 HINSTANCE D3DApp::AppInst()const
@@ -154,9 +153,7 @@ float D3DApp::AspectRatio()const
 int D3DApp::Run()
 {	
 	MSG msg = { 0 };
-
 	mTimer.Reset();
-
 	while (msg.message != WM_QUIT)
 	{
 		// If there are Window messages then process them.
@@ -169,7 +166,6 @@ int D3DApp::Run()
 		else
 		{
 			mTimer.Tick();
-
 			if (!mAppPaused)
 			{
 				CalculateFrameStats();
@@ -177,7 +173,8 @@ int D3DApp::Run()
 				DrawScene();
 			}
 			else
-			{
+			{	
+				//使用函数Sleep来暂停线程的执行。
 				Sleep(100);
 			}
 		}
@@ -212,7 +209,7 @@ void D3DApp::OnResize()
 	// Resize the swap chain and recreate the render target view.
 	// (*mSwapChain).ResizeBuffers
 	ThrowIfFailed(mSwapChain->ResizeBuffers(1, mClientWidth, mClientHeight, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
-	ID3D11Texture2D* backBuffer;
+	ID3D11Texture2D* backBuffer = 0;
 	ThrowIfFailed(mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer)));
 	ThrowIfFailed(md3dDevice->CreateRenderTargetView(backBuffer, 0, &mRenderTargetView));
 	ReleaseCom(backBuffer);
@@ -297,7 +294,7 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 
 		// WM_SIZE is sent when the user resizes the window.  
 	case WM_SIZE:
-		// Save the new client area dimensions.
+		// Save the fresh client area dimensions.
 		mClientWidth = LOWORD(lParam);
 		mClientHeight = HIWORD(lParam);
 		if (md3dDevice)
@@ -360,7 +357,7 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		return 0;
 
 		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
-		// Here we reset everything based on the new window dimensions.
+		// Here we reset everything based on the fresh window dimensions.
 	case WM_EXITSIZEMOVE:
 		mAppPaused = false;
 		mResizing = false;
@@ -488,7 +485,7 @@ LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		// WM_SIZE is sent when the user resizes the window.  
 	case WM_SIZE:
-		// Save the new client area dimensions.
+		// Save the fresh client area dimensions.
 		mClientWidth = LOWORD(lParam);
 		mClientHeight = HIWORD(lParam);
 		if (md3dDevice)
@@ -551,7 +548,7 @@ LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		return 0;
 
 		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
-		// Here we reset everything based on the new window dimensions.
+		// Here we reset everything based on the fresh window dimensions.
 	case WM_EXITSIZEMOVE:
 		mAppPaused = false;
 		mResizing = false;
@@ -586,7 +583,6 @@ LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	case WM_MOUSEMOVE:
 		OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
-
 
 	case WM_MOUSEWHEEL:
 		if ((short)GET_WHEEL_DELTA_WPARAM(wParam) > 0)
@@ -936,7 +932,7 @@ void D3DApp::CalculateFrameStats()
 {
 	// Code computes the average frames per second, and also the 
 	// average time it takes to render one frame.  These stats 
-	// are appended to the window caption bar.
+	// can be appended to the window caption bar.
 
 	static int frameCnt = 0;
 	static float timeElapsed = 0.0f;
@@ -969,7 +965,7 @@ void D3DApp::CalculateFrameStats()
 //--------------------------------------------------------------------------------------
 void D3DApp::CleanupDevice()
 {	
-	/*
+	
 	if (md3dImmediateContext) md3dImmediateContext->ClearState();
 	if (md3dDevice) md3dDevice->Release();
 	if (md3dImmediateContext) md3dImmediateContext->Release();
@@ -977,7 +973,7 @@ void D3DApp::CleanupDevice()
 	if (mRenderTargetView) mRenderTargetView->Release();
 	if (mDepthStencilView) mDepthStencilView->Release();
 
-	
+	/*
 	if (g_pConstantBuffer) g_pConstantBuffer->Release();
 	if (g_pVertexBuffer) g_pVertexBuffer->Release();
 	if (g_pIndexBuffer) g_pIndexBuffer->Release();

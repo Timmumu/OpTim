@@ -1,10 +1,15 @@
 ﻿//***************************************************************************************
 // d3dUtil.h by Frank Luna (C) 2015 All Rights Reserved.
 //
-// General helper code.
 //***************************************************************************************
 
-#pragma once
+#ifndef D3DUTIL_H
+#define D3DUTIL_H
+
+#if defined(DEBUG) || defined(_DEBUG)
+#define _CRTDBG_MAP_ALLOC
+#include <crtdbg.h>
+#endif
 
 // Convenience macro for releasing COM objects.
 #ifndef ReleaseCom
@@ -43,7 +48,6 @@ inline std::wstring AnsiToWString(const std::string& str)
 	return std::wstring(buffer);
 }
 
-
 class DxException
 {
 public:
@@ -70,3 +74,5 @@ public:
 #ifndef IF
 #define IF(p)	{if(p != D3D_OK) return false;}			   //定义一个IF宏，用于返回BOOL型的检测
 #endif
+
+#endif // D3DUTIL_H

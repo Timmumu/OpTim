@@ -183,20 +183,20 @@ struct D3DX11_EFFECT_TYPE_DESC
     D3D_SHADER_VARIABLE_CLASS    Class;  // (e.g. scalar, vector, object, etc.)
     D3D_SHADER_VARIABLE_TYPE     Type;   // (e.g. float, texture, vertexshader, etc.)
     
-    uint32_t    Elements;           // Number of elements in this type
+    int32_t    Elements;           // Number of elements in this type
                                     // (0 if not an array) 
-    uint32_t    Members;            // Number of members
+    int32_t    Members;            // Number of members
                                     // (0 if not a structure)
-    uint32_t    Rows;               // Number of rows in this type
+    int32_t    Rows;               // Number of rows in this type
                                     // (0 if not a numeric primitive)
-    uint32_t    Columns;            // Number of columns in this type
+    int32_t    Columns;            // Number of columns in this type
                                     // (0 if not a numeric primitive)
     
-    uint32_t    PackedSize;         // Number of bytes required to represent
+    int32_t    PackedSize;         // Number of bytes required to represent
                                     // this data type, when tightly packed
-    uint32_t    UnpackedSize;       // Number of bytes occupied by this data
+    int32_t    UnpackedSize;       // Number of bytes occupied by this data
                                     // type, when laid out in a constant buffer
-    uint32_t    Stride;             // Number of bytes to seek between elements,
+    int32_t    Stride;             // Number of bytes to seek between elements,
                                     // when laid out in a constant buffer
 };
 
@@ -217,11 +217,11 @@ DECLARE_INTERFACE_(ID3DX11EffectType, IUnknown)
     // ID3DX11EffectType
     STDMETHOD_(bool, IsValid)(THIS) PURE;
     STDMETHOD(GetDesc)(THIS_ _Out_ D3DX11_EFFECT_TYPE_DESC *pDesc) PURE;
-    STDMETHOD_(ID3DX11EffectType*, GetMemberTypeByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectType*, GetMemberTypeByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectType*, GetMemberTypeByName)(THIS_ _In_z_ LPCSTR Name) PURE;
     STDMETHOD_(ID3DX11EffectType*, GetMemberTypeBySemantic)(THIS_ _In_z_ LPCSTR Semantic) PURE;
-    STDMETHOD_(LPCSTR, GetMemberName)(THIS_ _In_ uint32_t Index) PURE;
-    STDMETHOD_(LPCSTR, GetMemberSemantic)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(LPCSTR, GetMemberName)(THIS_ _In_ int32_t Index) PURE;
+    STDMETHOD_(LPCSTR, GetMemberSemantic)(THIS_ _In_ int32_t Index) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -242,15 +242,15 @@ struct D3DX11_EFFECT_VARIABLE_DESC
                                     // or structure member (nullptr for 
                                     // annotations or if not present)
     
-    uint32_t    Flags;              // D3DX11_EFFECT_VARIABLE_* flags
-    uint32_t    Annotations;        // Number of annotations on this variable
+    int32_t    Flags;              // D3DX11_EFFECT_VARIABLE_* flags
+    int32_t    Annotations;        // Number of annotations on this variable
                                     // (always 0 for annotations)
 
-    uint32_t    BufferOffset;       // Offset into containing cbuffer or tbuffer
+    int32_t    BufferOffset;       // Offset into containing cbuffer or tbuffer
                                     // (always 0 for annotations or variables
                                     // not in constant buffers)
 
-    uint32_t    ExplicitBindPoint;  // Used if the variable has been explicitly bound
+    int32_t    ExplicitBindPoint;  // Used if the variable has been explicitly bound
                                     // using the register keyword. Check Flags for
                                     // D3DX11_EFFECT_VARIABLE_EXPLICIT_BIND_POINT;
 };
@@ -292,14 +292,14 @@ DECLARE_INTERFACE_(ID3DX11EffectVariable, IUnknown)
     STDMETHOD_(ID3DX11EffectType*, GetType)(THIS) PURE;
     STDMETHOD(GetDesc)(THIS_ _Out_ D3DX11_EFFECT_VARIABLE_DESC *pDesc) PURE;
     
-    STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByName)(THIS_ _In_z_ LPCSTR Name) PURE;
     
-    STDMETHOD_(ID3DX11EffectVariable*, GetMemberByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectVariable*, GetMemberByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectVariable*, GetMemberByName)(THIS_ _In_z_ LPCSTR Name) PURE;
     STDMETHOD_(ID3DX11EffectVariable*, GetMemberBySemantic)(THIS_ _In_z_ LPCSTR Semantic) PURE;
     
-    STDMETHOD_(ID3DX11EffectVariable*, GetElement)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectVariable*, GetElement)(THIS_ _In_ int32_t Index) PURE;
 
     STDMETHOD_(ID3DX11EffectConstantBuffer*, GetParentConstantBuffer)(THIS) PURE;
     
@@ -320,8 +320,8 @@ DECLARE_INTERFACE_(ID3DX11EffectVariable, IUnknown)
     STDMETHOD_(ID3DX11EffectRasterizerVariable*, AsRasterizer)(THIS) PURE;
     STDMETHOD_(ID3DX11EffectSamplerVariable*, AsSampler)(THIS) PURE;
     
-    STDMETHOD(SetRawValue)(THIS_ _In_reads_bytes_(ByteCount) const void *pData, _In_ uint32_t ByteOffset, _In_ uint32_t ByteCount) PURE;
-    STDMETHOD(GetRawValue)(THIS_ _Out_writes_bytes_(ByteCount) void *pData, _In_ uint32_t ByteOffset, _In_ uint32_t ByteCount) PURE;
+    STDMETHOD(SetRawValue)(THIS_ _In_reads_bytes_(ByteCount) const void *pData, _In_ int32_t ByteOffset, _In_ int32_t ByteCount) PURE;
+    STDMETHOD(GetRawValue)(THIS_ _Out_writes_bytes_(ByteCount) void *pData, _In_ int32_t ByteOffset, _In_ int32_t ByteCount) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -347,20 +347,20 @@ DECLARE_INTERFACE_(ID3DX11EffectScalarVariable, ID3DX11EffectVariable)
     STDMETHOD(SetFloat)(THIS_ _In_ const float Value) PURE;
     STDMETHOD(GetFloat)(THIS_ _Out_ float *pValue) PURE;    
     
-    STDMETHOD(SetFloatArray)(THIS_ _In_reads_(Count) const float *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(GetFloatArray)(THIS_ _Out_writes_(Count) float *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(SetFloatArray)(THIS_ _In_reads_(Count) const float *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(GetFloatArray)(THIS_ _Out_writes_(Count) float *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
     
     STDMETHOD(SetInt)(THIS_ _In_ const int Value) PURE;
     STDMETHOD(GetInt)(THIS_ _Out_ int *pValue) PURE;
     
-    STDMETHOD(SetIntArray)(THIS_ _In_reads_(Count) const int *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(GetIntArray)(THIS_ _Out_writes_(Count) int *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(SetIntArray)(THIS_ _In_reads_(Count) const int *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(GetIntArray)(THIS_ _Out_writes_(Count) int *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
     
     STDMETHOD(SetBool)(THIS_ _In_ const bool Value) PURE;
     STDMETHOD(GetBool)(THIS_ _Out_ bool *pValue) PURE;
     
-    STDMETHOD(SetBoolArray)(THIS_ _In_reads_(Count) const bool *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(GetBoolArray)(THIS_ _Out_writes_(Count) bool *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(SetBoolArray)(THIS_ _In_reads_(Count) const bool *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(GetBoolArray)(THIS_ _Out_writes_(Count) bool *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -391,13 +391,13 @@ DECLARE_INTERFACE_(ID3DX11EffectVectorVariable, ID3DX11EffectVariable)
     STDMETHOD(GetIntVector)  (THIS_ _Out_writes_(4) int *pData) PURE;
     STDMETHOD(GetFloatVector)(THIS_ _Out_writes_(4) float *pData) PURE;
 
-    STDMETHOD(SetBoolVectorArray) (THIS_ _In_reads_(Count*4) const bool *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(SetIntVectorArray)  (THIS_ _In_reads_(Count*4) const int *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(SetFloatVectorArray)(THIS_ _In_reads_(Count*4) const float *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(SetBoolVectorArray) (THIS_ _In_reads_(Count*4) const bool *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(SetIntVectorArray)  (THIS_ _In_reads_(Count*4) const int *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(SetFloatVectorArray)(THIS_ _In_reads_(Count*4) const float *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
 
-    STDMETHOD(GetBoolVectorArray) (THIS_ _Out_writes_(Count*4) bool *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(GetIntVectorArray)  (THIS_ _Out_writes_(Count*4) int *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(GetFloatVectorArray)(THIS_ _Out_writes_(Count*4) float *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(GetBoolVectorArray) (THIS_ _Out_writes_(Count*4) bool *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(GetIntVectorArray)  (THIS_ _Out_writes_(Count*4) int *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(GetFloatVectorArray)(THIS_ _Out_writes_(Count*4) float *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -423,20 +423,20 @@ DECLARE_INTERFACE_(ID3DX11EffectMatrixVariable, ID3DX11EffectVariable)
     STDMETHOD(SetMatrix)(THIS_ _In_reads_(16) const float *pData) PURE;
     STDMETHOD(GetMatrix)(THIS_ _Out_writes_(16) float *pData) PURE;
     
-    STDMETHOD(SetMatrixArray)(THIS_ _In_reads_(Count*16) const float *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(GetMatrixArray)(THIS_ _Out_writes_(Count*16) float *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(SetMatrixArray)(THIS_ _In_reads_(Count*16) const float *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(GetMatrixArray)(THIS_ _Out_writes_(Count*16) float *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
     
-    STDMETHOD(SetMatrixPointerArray)(_In_reads_(Count*16) const float **ppData, uint32_t Offset, uint32_t Count) PURE;
-    STDMETHOD(GetMatrixPointerArray)(_Out_writes_(Count*16) float **ppData, uint32_t Offset, uint32_t Count)  PURE;
+    STDMETHOD(SetMatrixPointerArray)(_In_reads_(Count*16) const float **ppData, int32_t Offset, int32_t Count) PURE;
+    STDMETHOD(GetMatrixPointerArray)(_Out_writes_(Count*16) float **ppData, int32_t Offset, int32_t Count)  PURE;
 
     STDMETHOD(SetMatrixTranspose)(THIS_ _In_reads_(16) const float *pData) PURE;
     STDMETHOD(GetMatrixTranspose)(THIS_ _Out_writes_(16) float *pData) PURE;
     
-    STDMETHOD(SetMatrixTransposeArray)(THIS_ _In_reads_(Count*16) const float *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(GetMatrixTransposeArray)(THIS_ _Out_writes_(Count*16) float *pData, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(SetMatrixTransposeArray)(THIS_ _In_reads_(Count*16) const float *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(GetMatrixTransposeArray)(THIS_ _Out_writes_(Count*16) float *pData, _In_ int32_t Offset, _In_ int32_t Count) PURE;
 
-    STDMETHOD(SetMatrixTransposePointerArray)(_In_reads_(Count*16) const float **ppData, uint32_t Offset, uint32_t Count)  PURE;
-    STDMETHOD(GetMatrixTransposePointerArray)(_Out_writes_(Count*16) float **ppData, uint32_t Offset, uint32_t Count)  PURE;
+    STDMETHOD(SetMatrixTransposePointerArray)(_In_reads_(Count*16) const float **ppData, int32_t Offset, int32_t Count)  PURE;
+    STDMETHOD(GetMatrixTransposePointerArray)(_Out_writes_(Count*16) float **ppData, int32_t Offset, int32_t Count)  PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -460,7 +460,7 @@ DECLARE_INTERFACE_(ID3DX11EffectStringVariable, ID3DX11EffectVariable)
 
     // ID3DX11EffectStringVariable
     STDMETHOD(GetString)(THIS_ _Outptr_result_z_ LPCSTR *ppString) PURE;
-    STDMETHOD(GetStringArray)(THIS_ _Out_writes_(Count) LPCSTR *ppStrings, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(GetStringArray)(THIS_ _Out_writes_(Count) LPCSTR *ppStrings, _In_ int32_t Offset, _In_ int32_t Count) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -533,8 +533,8 @@ DECLARE_INTERFACE_(ID3DX11EffectShaderResourceVariable, ID3DX11EffectVariable)
     STDMETHOD(SetResource)(THIS_ _In_ ID3D11ShaderResourceView *pResource) PURE;
     STDMETHOD(GetResource)(THIS_ _Outptr_ ID3D11ShaderResourceView **ppResource) PURE;
     
-    STDMETHOD(SetResourceArray)(THIS_ _In_reads_(Count) ID3D11ShaderResourceView **ppResources, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(GetResourceArray)(THIS_ _Out_writes_(Count) ID3D11ShaderResourceView **ppResources, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(SetResourceArray)(THIS_ _In_reads_(Count) ID3D11ShaderResourceView **ppResources, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(GetResourceArray)(THIS_ _Out_writes_(Count) ID3D11ShaderResourceView **ppResources, _In_ int32_t Offset, _In_ int32_t Count) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -560,8 +560,8 @@ DECLARE_INTERFACE_(ID3DX11EffectUnorderedAccessViewVariable, ID3DX11EffectVariab
     STDMETHOD(SetUnorderedAccessView)(THIS_ _In_ ID3D11UnorderedAccessView *pResource) PURE;
     STDMETHOD(GetUnorderedAccessView)(THIS_ _Outptr_ ID3D11UnorderedAccessView **ppResource) PURE;
 
-    STDMETHOD(SetUnorderedAccessViewArray)(THIS_ _In_reads_(Count) ID3D11UnorderedAccessView **ppResources, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(GetUnorderedAccessViewArray)(THIS_ _Out_writes_(Count) ID3D11UnorderedAccessView **ppResources, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(SetUnorderedAccessViewArray)(THIS_ _In_reads_(Count) ID3D11UnorderedAccessView **ppResources, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(GetUnorderedAccessViewArray)(THIS_ _Out_writes_(Count) ID3D11UnorderedAccessView **ppResources, _In_ int32_t Offset, _In_ int32_t Count) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -587,8 +587,8 @@ DECLARE_INTERFACE_(ID3DX11EffectRenderTargetViewVariable, ID3DX11EffectVariable)
     STDMETHOD(SetRenderTarget)(THIS_ _In_ ID3D11RenderTargetView *pResource) PURE;
     STDMETHOD(GetRenderTarget)(THIS_ _Outptr_ ID3D11RenderTargetView **ppResource) PURE;
     
-    STDMETHOD(SetRenderTargetArray)(THIS_ _In_reads_(Count) ID3D11RenderTargetView **ppResources, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(GetRenderTargetArray)(THIS_ _Out_writes_(Count) ID3D11RenderTargetView **ppResources, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(SetRenderTargetArray)(THIS_ _In_reads_(Count) ID3D11RenderTargetView **ppResources, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(GetRenderTargetArray)(THIS_ _Out_writes_(Count) ID3D11RenderTargetView **ppResources, _In_ int32_t Offset, _In_ int32_t Count) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -614,8 +614,8 @@ DECLARE_INTERFACE_(ID3DX11EffectDepthStencilViewVariable, ID3DX11EffectVariable)
     STDMETHOD(SetDepthStencil)(THIS_ _In_ ID3D11DepthStencilView *pResource) PURE;
     STDMETHOD(GetDepthStencil)(THIS_ _Outptr_ ID3D11DepthStencilView **ppResource) PURE;
     
-    STDMETHOD(SetDepthStencilArray)(THIS_ _In_reads_(Count) ID3D11DepthStencilView **ppResources, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
-    STDMETHOD(GetDepthStencilArray)(THIS_ _Out_writes_(Count) ID3D11DepthStencilView **ppResources, _In_ uint32_t Offset, _In_ uint32_t Count) PURE;
+    STDMETHOD(SetDepthStencilArray)(THIS_ _In_reads_(Count) ID3D11DepthStencilView **ppResources, _In_ int32_t Offset, _In_ int32_t Count) PURE;
+    STDMETHOD(GetDepthStencilArray)(THIS_ _Out_writes_(Count) ID3D11DepthStencilView **ppResources, _In_ int32_t Offset, _In_ int32_t Count) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -668,14 +668,14 @@ struct D3DX11_EFFECT_SHADER_DESC
     
     // -- The following fields are not valid after Optimize() --
     const uint8_t *pBytecode;                // Shader bytecode
-    uint32_t BytecodeLength;
+    int32_t BytecodeLength;
     
     LPCSTR SODecls[D3D11_SO_STREAM_COUNT];  // Stream out declaration string (for GS with SO)
-    uint32_t RasterizedStream;
+    int32_t RasterizedStream;
     
-    uint32_t NumInputSignatureEntries;          // Number of entries in the input signature
-    uint32_t NumOutputSignatureEntries;         // Number of entries in the output signature
-    uint32_t NumPatchConstantSignatureEntries;  // Number of entries in the patch constant signature
+    int32_t NumInputSignatureEntries;          // Number of entries in the input signature
+    int32_t NumOutputSignatureEntries;         // Number of entries in the output signature
+    int32_t NumPatchConstantSignatureEntries;  // Number of entries in the patch constant signature
 };
 
 
@@ -695,18 +695,18 @@ DECLARE_INTERFACE_(ID3DX11EffectShaderVariable, ID3DX11EffectVariable)
     // ID3DX11EffectVariable
 
     // ID3DX11EffectShaderVariable
-    STDMETHOD(GetShaderDesc)(THIS_ _In_ uint32_t ShaderIndex, _Out_ D3DX11_EFFECT_SHADER_DESC *pDesc) PURE;
+    STDMETHOD(GetShaderDesc)(THIS_ _In_ int32_t ShaderIndex, _Out_ D3DX11_EFFECT_SHADER_DESC *pDesc) PURE;
     
-    STDMETHOD(GetVertexShader)(THIS_ _In_ uint32_t ShaderIndex, _Outptr_ ID3D11VertexShader **ppVS) PURE;
-    STDMETHOD(GetGeometryShader)(THIS_ _In_ uint32_t ShaderIndex, _Outptr_ ID3D11GeometryShader **ppGS) PURE;
-    STDMETHOD(GetPixelShader)(THIS_ _In_ uint32_t ShaderIndex, _Outptr_ ID3D11PixelShader **ppPS) PURE;
-    STDMETHOD(GetHullShader)(THIS_ _In_ uint32_t ShaderIndex, _Outptr_ ID3D11HullShader **ppHS) PURE;
-    STDMETHOD(GetDomainShader)(THIS_ _In_ uint32_t ShaderIndex, _Outptr_ ID3D11DomainShader **ppDS) PURE;
-    STDMETHOD(GetComputeShader)(THIS_ _In_ uint32_t ShaderIndex, _Outptr_ ID3D11ComputeShader **ppCS) PURE;
+    STDMETHOD(GetVertexShader)(THIS_ _In_ int32_t ShaderIndex, _Outptr_ ID3D11VertexShader **ppVS) PURE;
+    STDMETHOD(GetGeometryShader)(THIS_ _In_ int32_t ShaderIndex, _Outptr_ ID3D11GeometryShader **ppGS) PURE;
+    STDMETHOD(GetPixelShader)(THIS_ _In_ int32_t ShaderIndex, _Outptr_ ID3D11PixelShader **ppPS) PURE;
+    STDMETHOD(GetHullShader)(THIS_ _In_ int32_t ShaderIndex, _Outptr_ ID3D11HullShader **ppHS) PURE;
+    STDMETHOD(GetDomainShader)(THIS_ _In_ int32_t ShaderIndex, _Outptr_ ID3D11DomainShader **ppDS) PURE;
+    STDMETHOD(GetComputeShader)(THIS_ _In_ int32_t ShaderIndex, _Outptr_ ID3D11ComputeShader **ppCS) PURE;
     
-    STDMETHOD(GetInputSignatureElementDesc)(THIS_ _In_ uint32_t ShaderIndex, _In_ uint32_t Element, _Out_ D3D11_SIGNATURE_PARAMETER_DESC *pDesc) PURE;
-    STDMETHOD(GetOutputSignatureElementDesc)(THIS_ _In_ uint32_t ShaderIndex, _In_ uint32_t Element, _Out_ D3D11_SIGNATURE_PARAMETER_DESC *pDesc) PURE;
-    STDMETHOD(GetPatchConstantSignatureElementDesc)(THIS_ _In_ uint32_t ShaderIndex, _In_ uint32_t Element, _Out_ D3D11_SIGNATURE_PARAMETER_DESC *pDesc) PURE;
+    STDMETHOD(GetInputSignatureElementDesc)(THIS_ _In_ int32_t ShaderIndex, _In_ int32_t Element, _Out_ D3D11_SIGNATURE_PARAMETER_DESC *pDesc) PURE;
+    STDMETHOD(GetOutputSignatureElementDesc)(THIS_ _In_ int32_t ShaderIndex, _In_ int32_t Element, _Out_ D3D11_SIGNATURE_PARAMETER_DESC *pDesc) PURE;
+    STDMETHOD(GetPatchConstantSignatureElementDesc)(THIS_ _In_ int32_t ShaderIndex, _In_ int32_t Element, _Out_ D3D11_SIGNATURE_PARAMETER_DESC *pDesc) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -729,10 +729,10 @@ DECLARE_INTERFACE_(ID3DX11EffectBlendVariable, ID3DX11EffectVariable)
     // ID3DX11EffectVariable
 
     // ID3DX11EffectBlendVariable
-    STDMETHOD(GetBlendState)(THIS_ _In_ uint32_t Index, _Outptr_ ID3D11BlendState **ppState) PURE;
-    STDMETHOD(SetBlendState)(THIS_ _In_ uint32_t Index, _In_ ID3D11BlendState *pState) PURE;
-    STDMETHOD(UndoSetBlendState)(THIS_ _In_ uint32_t Index) PURE; 
-    STDMETHOD(GetBackingStore)(THIS_ _In_ uint32_t Index, _Out_ D3D11_BLEND_DESC *pDesc) PURE;
+    STDMETHOD(GetBlendState)(THIS_ _In_ int32_t Index, _Outptr_ ID3D11BlendState **ppState) PURE;
+    STDMETHOD(SetBlendState)(THIS_ _In_ int32_t Index, _In_ ID3D11BlendState *pState) PURE;
+    STDMETHOD(UndoSetBlendState)(THIS_ _In_ int32_t Index) PURE; 
+    STDMETHOD(GetBackingStore)(THIS_ _In_ int32_t Index, _Out_ D3D11_BLEND_DESC *pDesc) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -755,10 +755,10 @@ DECLARE_INTERFACE_(ID3DX11EffectDepthStencilVariable, ID3DX11EffectVariable)
     // ID3DX11EffectVariable
 
     // ID3DX11EffectDepthStencilVariable
-    STDMETHOD(GetDepthStencilState)(THIS_ _In_ uint32_t Index, _Outptr_ ID3D11DepthStencilState **ppState) PURE;
-    STDMETHOD(SetDepthStencilState)(THIS_ _In_ uint32_t Index, _In_ ID3D11DepthStencilState *pState) PURE;
-    STDMETHOD(UndoSetDepthStencilState)(THIS_ _In_ uint32_t Index) PURE;
-    STDMETHOD(GetBackingStore)(THIS_ _In_ uint32_t Index, _Out_ D3D11_DEPTH_STENCIL_DESC *pDesc) PURE;
+    STDMETHOD(GetDepthStencilState)(THIS_ _In_ int32_t Index, _Outptr_ ID3D11DepthStencilState **ppState) PURE;
+    STDMETHOD(SetDepthStencilState)(THIS_ _In_ int32_t Index, _In_ ID3D11DepthStencilState *pState) PURE;
+    STDMETHOD(UndoSetDepthStencilState)(THIS_ _In_ int32_t Index) PURE;
+    STDMETHOD(GetBackingStore)(THIS_ _In_ int32_t Index, _Out_ D3D11_DEPTH_STENCIL_DESC *pDesc) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -781,10 +781,10 @@ DECLARE_INTERFACE_(ID3DX11EffectRasterizerVariable, ID3DX11EffectVariable)
     // ID3DX11EffectVariable
 
     // ID3DX11EffectRasterizerVariable
-    STDMETHOD(GetRasterizerState)(THIS_ _In_ uint32_t Index, _Outptr_ ID3D11RasterizerState **ppState) PURE;
-    STDMETHOD(SetRasterizerState)(THIS_ _In_ uint32_t Index, _In_ ID3D11RasterizerState *pState) PURE;
-    STDMETHOD(UndoSetRasterizerState)(THIS_ _In_ uint32_t Index) PURE;
-    STDMETHOD(GetBackingStore)(THIS_ _In_ uint32_t Index, _Out_ D3D11_RASTERIZER_DESC *pDesc) PURE;
+    STDMETHOD(GetRasterizerState)(THIS_ _In_ int32_t Index, _Outptr_ ID3D11RasterizerState **ppState) PURE;
+    STDMETHOD(SetRasterizerState)(THIS_ _In_ int32_t Index, _In_ ID3D11RasterizerState *pState) PURE;
+    STDMETHOD(UndoSetRasterizerState)(THIS_ _In_ int32_t Index) PURE;
+    STDMETHOD(GetBackingStore)(THIS_ _In_ int32_t Index, _Out_ D3D11_RASTERIZER_DESC *pDesc) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -807,10 +807,10 @@ DECLARE_INTERFACE_(ID3DX11EffectSamplerVariable, ID3DX11EffectVariable)
     // ID3DX11EffectVariable
 
     // ID3DX11EffectSamplerVariable
-    STDMETHOD(GetSampler)(THIS_ _In_ uint32_t Index, _Outptr_ ID3D11SamplerState **ppSampler) PURE;
-    STDMETHOD(SetSampler)(THIS_ _In_ uint32_t Index, _In_ ID3D11SamplerState *pSampler) PURE;
-    STDMETHOD(UndoSetSampler)(THIS_ _In_ uint32_t Index) PURE;
-    STDMETHOD(GetBackingStore)(THIS_ _In_ uint32_t Index, _Out_ D3D11_SAMPLER_DESC *pDesc) PURE;
+    STDMETHOD(GetSampler)(THIS_ _In_ int32_t Index, _Outptr_ ID3D11SamplerState **ppSampler) PURE;
+    STDMETHOD(SetSampler)(THIS_ _In_ int32_t Index, _In_ ID3D11SamplerState *pSampler) PURE;
+    STDMETHOD(UndoSetSampler)(THIS_ _In_ int32_t Index) PURE;
+    STDMETHOD(GetBackingStore)(THIS_ _In_ int32_t Index, _Out_ D3D11_SAMPLER_DESC *pDesc) PURE;
 };
 
 //////////////////////////////////////////////////////////////////////////////
@@ -826,14 +826,14 @@ DECLARE_INTERFACE_(ID3DX11EffectSamplerVariable, ID3DX11EffectVariable)
 struct D3DX11_PASS_DESC
 {
     LPCSTR Name;                    // Name of this pass (nullptr if not anonymous)    
-    uint32_t Annotations;           // Number of annotations on this pass
+    int32_t Annotations;           // Number of annotations on this pass
     
     uint8_t *pIAInputSignature;     // Signature from VS or GS (if there is no VS)
                                     // or nullptr if neither exists
     size_t IAInputSignatureSize;    // Singature size in bytes                                
                                     
-    uint32_t StencilRef;            // Specified in SetDepthStencilState()
-    uint32_t SampleMask;            // Specified in SetBlendState()
+    int32_t StencilRef;            // Specified in SetDepthStencilState()
+    int32_t SampleMask;            // Specified in SetBlendState()
     FLOAT BlendFactor[4];           // Specified in SetBlendState()
 };
 
@@ -856,7 +856,7 @@ struct D3DX11_PASS_SHADER_DESC
                                                     //   the pass block, pShaderVariable != nullptr,
                                                     //   but pShaderVariable->IsValid() == false.
     
-    uint32_t                    ShaderIndex;        // The element of pShaderVariable (if an array)
+    int32_t                    ShaderIndex;        // The element of pShaderVariable (if an array)
                                                     // or 0 if not applicable
 };
 
@@ -885,10 +885,10 @@ DECLARE_INTERFACE_(ID3DX11EffectPass, IUnknown)
     STDMETHOD(GetDomainShaderDesc)(THIS_ _Out_ D3DX11_PASS_SHADER_DESC *pDesc) PURE;
     STDMETHOD(GetComputeShaderDesc)(THIS_ _Out_ D3DX11_PASS_SHADER_DESC *pDesc) PURE;
     
-    STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByName)(THIS_ _In_z_ LPCSTR Name) PURE;
     
-    STDMETHOD(Apply)(THIS_ _In_ uint32_t Flags, _In_ ID3D11DeviceContext* pContext) PURE;
+    STDMETHOD(Apply)(THIS_ _In_ int32_t Flags, _In_ ID3D11DeviceContext* pContext) PURE;
     
     STDMETHOD(ComputeStateBlockMask)(THIS_ _Inout_ D3DX11_STATE_BLOCK_MASK *pStateBlockMask) PURE;
 };
@@ -906,8 +906,8 @@ DECLARE_INTERFACE_(ID3DX11EffectPass, IUnknown)
 struct D3DX11_TECHNIQUE_DESC
 {
     LPCSTR  Name;                   // Name of this technique (nullptr if not anonymous)
-    uint32_t    Passes;             // Number of passes contained within
-    uint32_t    Annotations;        // Number of annotations on this technique
+    int32_t    Passes;             // Number of passes contained within
+    int32_t    Annotations;        // Number of annotations on this technique
 };
 
 typedef interface ID3DX11EffectTechnique ID3DX11EffectTechnique;
@@ -928,10 +928,10 @@ DECLARE_INTERFACE_(ID3DX11EffectTechnique, IUnknown)
     STDMETHOD_(bool, IsValid)(THIS) PURE;
     STDMETHOD(GetDesc)(THIS_ _Out_ D3DX11_TECHNIQUE_DESC *pDesc) PURE;
     
-    STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByName)(THIS_ _In_z_ LPCSTR Name) PURE;
     
-    STDMETHOD_(ID3DX11EffectPass*, GetPassByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectPass*, GetPassByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectPass*, GetPassByName)(THIS_ _In_z_ LPCSTR Name) PURE;
     
     STDMETHOD(ComputeStateBlockMask)(THIS_ _Inout_ D3DX11_STATE_BLOCK_MASK *pStateBlockMask) PURE;
@@ -950,8 +950,8 @@ DECLARE_INTERFACE_(ID3DX11EffectTechnique, IUnknown)
 struct D3DX11_GROUP_DESC
 {
     LPCSTR  Name;                   // Name of this group (only nullptr if global)
-    uint32_t    Techniques;         // Number of techniques contained within
-    uint32_t    Annotations;        // Number of annotations on this group
+    int32_t    Techniques;         // Number of techniques contained within
+    int32_t    Annotations;        // Number of annotations on this group
 };
 
 typedef interface ID3DX11EffectGroup ID3DX11EffectGroup;
@@ -972,10 +972,10 @@ DECLARE_INTERFACE_(ID3DX11EffectGroup, IUnknown)
     STDMETHOD_(bool, IsValid)(THIS) PURE;
     STDMETHOD(GetDesc)(THIS_ _Out_ D3DX11_GROUP_DESC *pDesc) PURE;
 
-    STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectVariable*, GetAnnotationByName)(THIS_ _In_z_ LPCSTR Name) PURE;
 
-    STDMETHOD_(ID3DX11EffectTechnique*, GetTechniqueByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectTechnique*, GetTechniqueByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectTechnique*, GetTechniqueByName)(THIS_ _In_z_ LPCSTR Name) PURE;
 };
 
@@ -991,11 +991,11 @@ DECLARE_INTERFACE_(ID3DX11EffectGroup, IUnknown)
 
 struct D3DX11_EFFECT_DESC
 {
-    uint32_t    ConstantBuffers;        // Number of constant buffers in this effect
-    uint32_t    GlobalVariables;        // Number of global variables in this effect
-    uint32_t    InterfaceVariables;     // Number of global interfaces in this effect
-    uint32_t    Techniques;             // Number of techniques in this effect
-    uint32_t    Groups;                 // Number of groups in this effect
+    int32_t    ConstantBuffers;        // Number of constant buffers in this effect
+    int32_t    GlobalVariables;        // Number of global variables in this effect
+    int32_t    InterfaceVariables;     // Number of global interfaces in this effect
+    int32_t    Techniques;             // Number of techniques in this effect
+    int32_t    Groups;                 // Number of groups in this effect
 };
 
 typedef interface ID3DX11Effect ID3DX11Effect;
@@ -1019,22 +1019,22 @@ DECLARE_INTERFACE_(ID3DX11Effect, IUnknown)
     
     STDMETHOD(GetDesc)(THIS_ _Out_ D3DX11_EFFECT_DESC *pDesc) PURE;
     
-    STDMETHOD_(ID3DX11EffectConstantBuffer*, GetConstantBufferByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectConstantBuffer*, GetConstantBufferByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectConstantBuffer*, GetConstantBufferByName)(THIS_ _In_z_ LPCSTR Name) PURE;
     
-    STDMETHOD_(ID3DX11EffectVariable*, GetVariableByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectVariable*, GetVariableByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectVariable*, GetVariableByName)(THIS_ _In_z_ LPCSTR Name) PURE;
     STDMETHOD_(ID3DX11EffectVariable*, GetVariableBySemantic)(THIS_ _In_z_ LPCSTR Semantic) PURE;
     
-    STDMETHOD_(ID3DX11EffectGroup*, GetGroupByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectGroup*, GetGroupByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectGroup*, GetGroupByName)(THIS_ _In_z_ LPCSTR Name) PURE;
 
-    STDMETHOD_(ID3DX11EffectTechnique*, GetTechniqueByIndex)(THIS_ _In_ uint32_t Index) PURE;
+    STDMETHOD_(ID3DX11EffectTechnique*, GetTechniqueByIndex)(THIS_ _In_ int32_t Index) PURE;
     STDMETHOD_(ID3DX11EffectTechnique*, GetTechniqueByName)(THIS_ _In_z_ LPCSTR Name) PURE;
     
     STDMETHOD_(ID3D11ClassLinkage*, GetClassLinkage)(THIS) PURE;
 
-    STDMETHOD(CloneEffect)(THIS_ _In_ uint32_t Flags, _Outptr_ ID3DX11Effect** ppClonedEffect ) PURE;
+    STDMETHOD(CloneEffect)(THIS_ _In_ int32_t Flags, _Outptr_ ID3DX11Effect** ppClonedEffect ) PURE;
     STDMETHOD(Optimize)(THIS) PURE;
     STDMETHOD_(bool, IsOptimized)(THIS) PURE;
 };
