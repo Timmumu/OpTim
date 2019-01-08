@@ -98,8 +98,8 @@ D3DApp::D3DApp(HINSTANCE hInstance)
 	mClientWidth(1200),
 	mClientHeight(800),
 	mEnable4xMsaa(false),
-	mhMainWnd(0),
-	DirectHwnd(0),
+	mhMainWnd(0),		//parent window for MFC
+	DirectHwnd(0),		//child window for directx rendering
 	mAppPaused(false),
 	mMinimized(false),
 	mMaximized(false),
@@ -112,7 +112,10 @@ D3DApp::D3DApp(HINSTANCE hInstance)
 	mDepthStencilBuffer(0),
 	mRenderTargetView(0),
 	mDepthStencilView(0)
-{
+{	
+	//md3dDevice = 0???
+	DebuggerMarker = L"DebuggerMarker is 1";
+
 	ZeroMemory(&mScreenViewport, sizeof(D3D11_VIEWPORT));
 
 	// Get a pointer to the application object so we can forward 
@@ -129,10 +132,13 @@ D3DApp::~D3DApp()
 	ReleaseCom(mDepthStencilView);
 	ReleaseCom(mSwapChain);
 	ReleaseCom(mDepthStencilBuffer);
-	ReleaseCom(md3dImmediateContext);
-	ReleaseCom(md3dDevice);
 
 	// Restore all default settings.
+	if (md3dImmediateContext)
+		md3dImmediateContext->ClearState();
+
+	ReleaseCom(md3dImmediateContext);
+	ReleaseCom(md3dDevice);
 }
 
 HINSTANCE D3DApp::AppInst()const
@@ -188,7 +194,11 @@ bool D3DApp::Init()
 	
 	if (!InitMainWindow())	return false;
 	
-	if (!InitDirect3D())	return false;
+	if (!InitDirect3D())	
+	{
+		OutputDebugStringW(L" InitDirect3D() in d3dApp.cpp failed.");
+		return false;
+	}
 
 	return true;
 }
@@ -221,12 +231,6 @@ void D3DApp::OnResize()
 	depthStencilDesc.MipLevels = 1;
 	depthStencilDesc.ArraySize = 1;
 	depthStencilDesc.Format = DXGI_FORMAT_D24_UNORM_S8_UINT;
-	depthStencilDesc.SampleDesc.Count = 1;
-	depthStencilDesc.SampleDesc.Quality = 0;
-	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
-	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
-	depthStencilDesc.CPUAccessFlags = 0;
-	depthStencilDesc.MiscFlags = 0;
 
 	// Use 4X MSAA? --must match swap chain MSAA values.
 	if (mEnable4xMsaa)
@@ -241,14 +245,20 @@ void D3DApp::OnResize()
 		depthStencilDesc.SampleDesc.Quality = 0;
 	}
 
+	depthStencilDesc.Usage = D3D11_USAGE_DEFAULT;
+	depthStencilDesc.BindFlags = D3D11_BIND_DEPTH_STENCIL;
+	depthStencilDesc.CPUAccessFlags = 0;
+	depthStencilDesc.MiscFlags = 0;
+
 	ThrowIfFailed(md3dDevice->CreateTexture2D(&depthStencilDesc, 0, &mDepthStencilBuffer));	
 	
 	// Create the depth stencil view
+/*
 	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
 	ZeroMemory(&descDSV, sizeof(descDSV));
 	descDSV.Format = depthStencilDesc.Format;
 	descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
-	descDSV.Texture2D.MipSlice = 0;
+	descDSV.Texture2D.MipSlice = 0;*/
 	ThrowIfFailed(md3dDevice->CreateDepthStencilView(mDepthStencilBuffer, 0, &mDepthStencilView));
 
 	// Bind the render target view and depth/stencil view to the pipeline.
@@ -262,6 +272,7 @@ void D3DApp::OnResize()
 	mScreenViewport.Height = static_cast<float>(mClientHeight - 80);
 	mScreenViewport.MinDepth = 0.0f;
 	mScreenViewport.MaxDepth = 1.0f;
+
 	md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 }
 
@@ -421,8 +432,7 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 			break;
 
 		case IDM_ImportE2k:
-			StructureGeometryBuffers_ifstream();
-			//StructureGeometryBuffers_fread();
+			StructureGeometryBuffers();
 			break;
 
 		case IDM_ImportDLLL:
@@ -434,6 +444,10 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 			break;
 
 		case IDM_ImportWL:
+			break;
+
+		case IDM_ImportSF:
+			FdtGeometryBuffers();
 			break;
 
 		case IDM_ImportE2k_Test:
@@ -611,8 +625,7 @@ LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		
 		case IDM_ImportE2k:
-			StructureGeometryBuffers_ifstream();
-			//StructureGeometryBuffers_fread();
+			StructureGeometryBuffers();
 			break;
 
 		case IDM_ImportDLLL:
@@ -628,6 +641,10 @@ LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		case IDM_ImportE2k_Test:
 			//DialogBox(mhAppInst, MAKEINTRESOURCE(IDD_ImportE2kBox), hWnd, ImportE2kBox);
+			break;
+
+		case IDM_ImportSF:
+			FdtGeometryBuffers();
 			break;
 
 		case IDM_EXIT:
@@ -834,13 +851,11 @@ bool D3DApp::InitDirect3D()
 {	
 	// Create the device and device context.
 	UINT createDeviceFlags = 0;
-
 	#if defined(DEBUG) || defined(_DEBUG)  
 		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
 	#endif
 
 	D3D_FEATURE_LEVEL featureLevel;
-
 	HRESULT hr = D3D11CreateDevice(
 		0,                 // default adapter
 		md3dDriverType,
@@ -851,6 +866,10 @@ bool D3DApp::InitDirect3D()
 		&md3dDevice,
 		&featureLevel,
 		&md3dImmediateContext);
+
+	//debugging tracing
+	/*DebuggerMarker = L"DebuggerMarker is 2";
+	OutputDebugStringW(DebuggerMarker);*/
 
 	if (FAILED(hr))
 	{
@@ -865,7 +884,8 @@ bool D3DApp::InitDirect3D()
 	}
 	 
 	// Check 4X MSAA quality support for our back buffer format.
-	ThrowIfFailed(md3dDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, 4, &m4xMsaaQuality));
+	ThrowIfFailed(md3dDevice->CheckMultisampleQualityLevels(
+		DXGI_FORMAT_R8G8B8A8_UNORM, 4, &m4xMsaaQuality));
 	assert(m4xMsaaQuality > 0);	
 
 	// Fill out a DXGI_SWAP_CHAIN_DESC to describe our swap chain.
@@ -924,7 +944,10 @@ bool D3DApp::InitDirect3D()
 
 	OnResize();
 
-	return true;
+	DebuggerMarker = L"DebuggerMarker is 3";
+	OutputDebugStringW(DebuggerMarker);
+
+	return true;	
 }
 
 

@@ -16,14 +16,14 @@ public:
 
 	int Run();
 
-	virtual bool Init();
-	virtual void OnResize();
+	virtual bool Init() = 0;
+	virtual void OnResize() = 0;
 	virtual void UpdateScene(float dt ) = 0;
 	virtual void DrawScene() = 0;
 
-	virtual void BuildGeometryBuffers() = 0;
-	virtual void StructureGeometryBuffers_ifstream() = 0;
-	virtual void StructureGeometryBuffers_fread() = 0;
+	virtual void BuildGeometryBuffers() = 0;		//car geometry
+	virtual void StructureGeometryBuffers() = 0;
+	virtual void FdtGeometryBuffers() = 0;
 
 	virtual void ImportDLLL() = 0;
 	virtual void ImportDLLLTest() = 0;
@@ -70,6 +70,8 @@ protected:
 	GameTimer mTimer;
 
 	ID3D11Device* md3dDevice;
+	LPCTSTR DebuggerMarker;
+
 	ID3D11DeviceContext* md3dImmediateContext;
 	IDXGISwapChain* mSwapChain;
 	ID3D11Texture2D* mDepthStencilBuffer;
@@ -80,7 +82,7 @@ protected:
 	// Derived class should set these in derived constructor to customize starting values.
 	std::wstring mMainWndCaption;
 	D3D_DRIVER_TYPE md3dDriverType;
-	int mClientWidth = 0;
-	int mClientHeight = 0;
-	bool mEnable4xMsaa = false;
+	int mClientWidth;
+	int mClientHeight;
+	bool mEnable4xMsaa;
 };

@@ -1,4 +1,4 @@
-//Microsoft Visual C++ generated resource script.
+// Microsoft Visual C++ generated resource script.
 //
 #include "resource.h"
 
@@ -10,11 +10,15 @@
 #define APSTUDIO_HIDDEN_SYMBOLS
 #include "windows.h"
 #undef APSTUDIO_HIDDEN_SYMBOLS
+
 /////////////////////////////////////////////////////////////////////////////
 #undef APSTUDIO_READONLY_SYMBOLS
 
+/////////////////////////////////////////////////////////////////////////////
+// English (United States) resources
+
 #if !defined(AFX_RESOURCE_DLL) || defined(AFX_TARG_ENU)
-LANGUAGE 9, 1
+LANGUAGE LANG_ENGLISH, SUBLANG_ENGLISH_US
 #pragma code_page(1252)
 
 /////////////////////////////////////////////////////////////////////////////
@@ -24,10 +28,12 @@ LANGUAGE 9, 1
 
 // Icon with lowest ID value placed first to ensure application icon
 // remains consistent on all systems.
+IDI_OPTIMV101           ICON                    "Optim v18.1.ico"
 
-IDI_OPTIMV101       ICON         "Optim v18.1.ico"
-IDI_SMALL           ICON         "small.ico"
-IDI_HAMMER          ICON         "Hammer.ico"
+IDI_SMALL               ICON                    "small.ico"
+
+IDI_HAMMER              ICON                    "Hammer.ico"
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
@@ -37,76 +43,63 @@ IDI_HAMMER          ICON         "Hammer.ico"
 IDC_OPTIMV101 MENU
 BEGIN
     POPUP "&File"
-	BEGIN
-			MENUITEM "&Import E2k",			IDM_ImportE2k
-			MENUITEM "&Import DL+LL",		IDM_ImportDLLL
-			MENUITEM "&Import Wind Load",	IDM_ImportWL
-			MENUITEM "E&xit", IDM_EXIT
-		
-	END
-
-	POPUP "Edit"
-	BEGIN
-		MENUITEM "E&xit", IDM_EXIT
-	END
-	
-	POPUP "View"
-	BEGIN
-	MENUITEM "E&xit", IDM_EXIT
-	END
-
-	POPUP "Define"
-	BEGIN
-	MENUITEM "E&xit", IDM_EXIT
-	END
-
-	POPUP "Draw"
-	BEGIN
-		MENUITEM "&DrawCar ...", IDM_DrawCar
-	END
-
-	POPUP "Select"
-	BEGIN
-	MENUITEM "E&xit", IDM_EXIT
-	END
-
-	POPUP "Assign"
-	BEGIN
-	MENUITEM "E&xit", IDM_EXIT
-	END
-
-	POPUP "Analyze"
-	BEGIN
-	MENUITEM "E&xit", IDM_EXIT
-	END
-
-	POPUP "Display"
-	BEGIN
-		MENUITEM "3D", IDM_EXIT
-		MENUITEM "Base", IDM_EXIT
-		MENUITEM "Roof", IDM_EXIT
-	END
-
-	POPUP "Design"
-	BEGIN
-	MENUITEM "E&xit", IDM_EXIT
-	END
-
-	POPUP "Option"
-	BEGIN
-	MENUITEM "E&xit", IDM_EXIT
-	END
-
-	POPUP "&Help"
-	BEGIN
-        MENUITEM "&About ...",	IDM_ABOUT
+    BEGIN
+        MENUITEM "&Import Superstructure (E2k)", IDM_ImportE2k
+        MENUITEM "&Import Foundation (SAFE)",     IDM_ImportSF
+        MENUITEM "&Import Superstructure (DL+LL)", IDM_ImportDLLL
+        MENUITEM "&Import Superstructure (Wind Load)", IDM_ImportWL
+        MENUITEM "E&xit",                       IDM_EXIT
     END
-	
-	POPUP "&Test"
-	BEGIN
-	MENUITEM "&Import DLLLTest ...", IDM_ImportDLLL_Test
-	END
-
+    POPUP "Edit"
+    BEGIN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "View"
+    BEGIN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "Define"
+    BEGIN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "Draw"
+    BEGIN
+        MENUITEM "&DrawCar ...",                IDM_DrawCar
+    END
+    POPUP "Select"
+    BEGIN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "Assign"
+    BEGIN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "Analyze"
+    BEGIN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "Display"
+    BEGIN
+        MENUITEM "3D",                          IDM_EXIT
+        MENUITEM "Base",                        IDM_EXIT
+        MENUITEM "Roof",                        IDM_EXIT
+    END
+    POPUP "Design"
+    BEGIN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "Option"
+    BEGIN
+        MENUITEM "E&xit",                       IDM_EXIT
+    END
+    POPUP "&Help"
+    BEGIN
+        MENUITEM "&About ...",                  IDM_ABOUT
+    END
+    POPUP "&Test"
+    BEGIN
+        MENUITEM "&Import DLLLTest ...",        IDM_ImportDLLL_Test
+    END
 END
 
 
@@ -127,50 +120,53 @@ END
 // Dialog
 //
 
-IDD_ABOUTBOX DIALOG   22, 17, 230, 75
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+IDD_ABOUTBOX DIALOGEX 22, 17, 300, 75
+STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "About"
-FONT 8, "System"
+FONT 8, "System", 0, 0, 0x0
 BEGIN
-    ICON            IDI_OPTIMV101,IDC_MYICON,14,9,16,16
-    LTEXT           "Optim Version 18.1",IDC_STATIC,49,10,119,8,SS_NOPREFIX
-    LTEXT           "Copyright (c) TIMU Corporation. All rights reserved.",IDC_STATIC,49,20,119,8
-    DEFPUSHBUTTON   "OK",IDOK,195,6,30,11,WS_GROUP
+    ICON            IDI_OPTIMV101,IDC_MYICON,14,9,20,20
+    LTEXT           "Optim Version 18.1",IDC_STATIC,49,10,202,8,SS_NOPREFIX
+    LTEXT           "Supporting Etabs 9.6.0, SAFE 12.3.0, UNIT:kN, m",IDC_STATIC,49,20,200,8
+    LTEXT           "Send bugs or Needs to hutianyu@connect.hku.hk",IDC_STATIC,49,30,200,8
+    DEFPUSHBUTTON   "OK",IDOK,256,55,30,11,WS_GROUP
 END
 
-IDD_DrawCarBox DIALOG   22, 17, 230, 75
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+IDD_DrawCarBox DIALOG 22, 17, 230, 75
+STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "DrawCar"
 FONT 8, "System"
 BEGIN
-ICON            IDI_OPTIMV101, IDC_MYICON, 14, 9, 16, 16
-LTEXT           "Start Drawing Cars", IDC_STATIC, 49, 10, 119, 8, SS_NOPREFIX
-LTEXT           "Copyright (c) TIMU Corporation. All rights reserved.", IDC_STATIC, 49, 20, 119, 8
-DEFPUSHBUTTON   "DRAWCar", IDOK, 195, 6, 30, 11, WS_GROUP
+    ICON            IDI_OPTIMV101,IDC_MYICON,14,9,16,16
+    LTEXT           "Start Drawing Cars",IDC_STATIC,49,10,119,8,SS_NOPREFIX
+    LTEXT           "Copyright (c) TIMU Corporation. All rights reserved.",IDC_STATIC,49,20,119,8
+    DEFPUSHBUTTON   "DRAWCar",IDOK,195,6,30,11,WS_GROUP
 END
 
-IDD_ImportE2kBox DIALOG   22, 17, 230, 75
-STYLE DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
+IDD_ImportE2kBox DIALOG 22, 17, 230, 75
+STYLE DS_SETFONT | DS_MODALFRAME | WS_CAPTION | WS_SYSMENU
 CAPTION "ImportE2k"
 FONT 8, "System"
 BEGIN
-ICON            IDI_OPTIMV101, IDC_MYICON, 14, 9, 16, 16
-LTEXT           "Start Drawing Structures", IDC_STATIC, 49, 10, 119, 8, SS_NOPREFIX
-LTEXT           "Copyright (c) TIMU Corporation. All rights reserved.", IDC_STATIC, 49, 20, 119, 8
-DEFPUSHBUTTON   "ImportE2k", IDOK, 195, 6, 30, 11, WS_GROUP
+    ICON            IDI_OPTIMV101,IDC_MYICON,14,9,16,16
+    LTEXT           "Start Drawing Structures",IDC_STATIC,49,10,119,8,SS_NOPREFIX
+    LTEXT           "Copyright (c) TIMU Corporation. All rights reserved.",IDC_STATIC,49,20,119,8
+    DEFPUSHBUTTON   "ImportE2k",IDOK,195,6,30,11,WS_GROUP
 END
+
 
 #ifdef APSTUDIO_INVOKED
 /////////////////////////////////////////////////////////////////////////////
 //
 // TEXTINCLUDE
 //
-1 TEXTINCLUDE  
+
+1 TEXTINCLUDE 
 BEGIN
     "resource.h\0"
 END
 
-2 TEXTINCLUDE  
+2 TEXTINCLUDE 
 BEGIN
     "#define APSTUDIO_HIDDEN_SYMBOLS\r\n"
     "#include ""windows.h""\r\n"
@@ -178,7 +174,7 @@ BEGIN
     "\0"
 END
 
-3 TEXTINCLUDE  
+3 TEXTINCLUDE 
 BEGIN
     "\r\n"
     "\0"
@@ -186,19 +182,34 @@ END
 
 #endif    // APSTUDIO_INVOKED
 
+
+/////////////////////////////////////////////////////////////////////////////
+//
+// DESIGNINFO
+//
+
+#ifdef APSTUDIO_INVOKED
+GUIDELINES DESIGNINFO
+BEGIN
+    IDD_ABOUTBOX, DIALOG
+    BEGIN
+    END
+END
+#endif    // APSTUDIO_INVOKED
+
+
 /////////////////////////////////////////////////////////////////////////////
 //
 // String Table
 //
 
-STRINGTABLE  
+STRINGTABLE
 BEGIN
-	IDI_OPTIMV101		"Optim"
-	IDS_APP_TITLE       "Optim Studio"
+    IDS_APP_TITLE           "Optim Studio"
+    IDI_OPTIMV101           "Optim"
 END
 
-
-#endif
+#endif    // English (United States) resources
 /////////////////////////////////////////////////////////////////////////////
 
 
@@ -212,3 +223,4 @@ END
 
 /////////////////////////////////////////////////////////////////////////////
 #endif    // not APSTUDIO_INVOKED
+

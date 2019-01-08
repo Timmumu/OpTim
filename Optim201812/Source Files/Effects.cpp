@@ -20,7 +20,7 @@ Effect::Effect(ID3D11Device* device, const std::wstring& filename)
 
 	//simple checker
 	ThrowIfFailed(D3DX11CreateEffectFromMemory(&compiledShader[0], size, 0, device, &mFX));
-	//HR(D3DX11CreateEffectFromMemory(&compiledShader[0], size, 0, device, &mFX));
+	
 }	
 
 Effect::~Effect()
@@ -118,7 +118,9 @@ InstancedBasicEffect* Effects::InstancedBasicFX = 0;
 
 void Effects::InitAll(ID3D11Device* device)
 {
+
 	InstancedBasicFX = new InstancedBasicEffect(device, L"FX/InstancedBasic.fxo");
+
 }
 
 void Effects::DestroyAll()

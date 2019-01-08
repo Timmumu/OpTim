@@ -106,9 +106,10 @@
       <ConformanceMode>true</ConformanceMode>
       <PrecompiledHeaderFile />
       <AssemblerOutput>All</AssemblerOutput>
-      <RuntimeLibrary>MultiThreadedDLL</RuntimeLibrary>
+      <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
       <BasicRuntimeChecks>Default</BasicRuntimeChecks>
       <FunctionLevelLinking>true</FunctionLevelLinking>
+      <DebugInformationFormat>ProgramDatabase</DebugInformationFormat>
     </ClCompile>
     <Link>
       <SubSystem>Windows</SubSystem>
@@ -228,6 +229,7 @@
     <ClInclude Include="Header\resource.h" />
     <ClInclude Include="Header\Vertex.h" />
     <ClInclude Include="Header\xnacollision.h" />
+    <ClInclude Include="Resource Files\resource.h" />
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common\Camera.cpp">

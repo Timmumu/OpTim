@@ -97,9 +97,10 @@ public:
 class Effects
 {
 public:
+
+	//previous version: has "static" before the following 3 lines
 	static void InitAll(ID3D11Device* device);
 	static void DestroyAll();
-
 	static InstancedBasicEffect* InstancedBasicFX;
 };
 #pragma endregion

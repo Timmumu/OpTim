@@ -31,6 +31,8 @@ ID = An unknown or custom resource
 #define IDM_ImportWL				208
 #define IDM_ImportDLLL_Test				209
 
+#define IDM_ImportSF				210
+
 #define IDD_ImportE2kBox			2061	
 #define IDM_ImportE2k_Test		2071
 

@@ -60,6 +60,9 @@
     <ClInclude Include="Header\d3dx11effect.h">
       <Filter>Header Files</Filter>
     </ClInclude>
+    <ClInclude Include="Resource Files\resource.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
   </ItemGroup>
   <ItemGroup>
     <ClCompile Include="Common\Camera.cpp">

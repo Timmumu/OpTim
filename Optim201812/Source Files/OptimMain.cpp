@@ -39,19 +39,20 @@ struct InstancedData
 };
 
 struct LineDirectx
-{
+{	//line所在层， 起点，终点， 起点索引，终点索引，跨层数
 	std::string LineName, Story ;
 	std::string LineStart , LineEnd;
 	UINT LineSIndex = 0;
 	UINT LineEIndex = 0;
+	UINT SpanFloor = 0;
 };
 
 // 3 types of variables: string, UINT and float, declare once, but initialization is required for each
 struct Story { std::string StoryName;  float StoryHeight = 0.0; float TotalHeight = 0.0f; };
 struct PointCoord { std::string PtName; float PtX = 0.0f; float PtY = 0.0f; };
 struct Point3D { std::string PtName; float PtX = 0.0f; float PtY = 0.0f; float PtZ = 0.0f; };
-struct LineConnect { std::string LineName, LineType; string LineStart; string LineEnd ; UINT LineFloor = 0; };
-struct LineAssign { std::string LineName; string Story; string LineStart; string LineEnd; };
+struct LineConnect { std::string LineName, LineType; string LineStart; string LineEnd ; UINT SpanFloor = 0; };
+struct LineAssign { std::string LineName; string Story; string LineStart; string LineEnd; UINT SpanFloor = 0;};
 struct MaterialProp { std::string Name , Mass , Weight, ModulusE , PossionR ; };
 
 //Beam Forces
@@ -90,8 +91,8 @@ private:
 	void BuildGeometryBuffers();
 	void BuildInstancedBuffer();
 
-	void StructureGeometryBuffers_ifstream();
-	void StructureGeometryBuffers_fread();
+	void StructureGeometryBuffers();
+	void FdtGeometryBuffers();
 
 	void ImportDLLL();
 	void ImportDLLLTest();
@@ -142,7 +143,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, in
 
 	if (!theApp.Init())
 	{
-		OutputDebugStringW(L" theApp.Init() failed.");
+		OutputDebugStringW(L" theApp.Init() in OptimMain.cpp failed.");
 		return 0;
 	}
 	return theApp.Run();
@@ -196,21 +197,24 @@ OptimMain::~OptimMain()
 	ReleaseCom(mTargetIB);
 	ReleaseCom(mInstancedBuffer);
 
+
 	Effects::DestroyAll();
 	InputLayouts::DestroyAll();
 }
 
 bool OptimMain::Init()
 {
-	if (!D3DApp::Init()) return false;
+	if (!D3DApp::Init())
+	{	
+		OutputDebugStringW(L" D3DApp::Init() in OptimMain.cpp failed.");
+		return false;
+	}
 
 	// Must init Effects in prior to InputLayouts, the later depends on Effects' shader signatures.
 	Effects::InitAll(md3dDevice);
 	InputLayouts::InitAll(md3dDevice);
 
 	BuildInstancedBuffer();
-		//or
-	//StructureGeometryBuffers_fread();
 
 	return true;
 }
@@ -493,12 +497,12 @@ void OptimMain::BuildGeometryBuffers()
 	ThrowIfFailed(md3dDevice->CreateBuffer(&ibd, &iinitData, &mTargetIB));
 }
 
-void OptimMain::StructureGeometryBuffers_ifstream()
+void OptimMain::StructureGeometryBuffers()
 {
 	//for debugging
 	int ImportDLLLfread_Start = clock();
 	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-	std::ofstream fout("Models/Etabs_copy_ifstream.txt");
+	std::ofstream fout("Models/Etabs_copy.txt");
 
 	UINT vcount = 0;
 	UINT lcount = 0;
@@ -583,7 +587,7 @@ void OptimMain::StructureGeometryBuffers_ifstream()
 					LineConnect lc;
 					if (iss >> skip >> lc.LineName
 						>> lc.LineType >> lc.LineStart
-						>> lc.LineEnd >> lc.LineFloor)
+						>> lc.LineEnd >> lc.SpanFloor)
 						lineconnect.emplace_back(std::move(lc));
 				}
 
@@ -616,9 +620,8 @@ void OptimMain::StructureGeometryBuffers_ifstream()
 	vcount = Pt_Total;
 	lcount = LineAss_Count;
 
-	//expand 2D points to 3D
+	//expand 2D container points to 3D
 	point3d.resize(story.size(), vector<Point3D>(pointcoord.size()));
-
 	for (UINT i = 0; i < story.size(); i++)
 	{
 		for (UINT j = 0; j < pointcoord.size(); j++)
@@ -630,7 +633,8 @@ void OptimMain::StructureGeometryBuffers_ifstream()
 		}
 	}
 
-	std::vector <Vertex::Basic32> vertices(vcount);
+	//matching line connectivity to line assignment 
+	std::vector <Vertex::Basic32> vertices(vcount);		//1 vertex for each pt
 	std::vector <LineDirectx> linedirectx(lcount);
 
 	for (UINT i = 0; i < Story_Count; i++)
@@ -651,25 +655,31 @@ void OptimMain::StructureGeometryBuffers_ifstream()
 		}
 	}
 
+	//Initial Camera Setting
 	DirectX::XMStoreFloat3(&mSkullBox.Center, 0.5f*(vMin + vMax));
 	DirectX::XMStoreFloat3(&mSkullBox.Extents, 0.5f*(vMax - vMin));
 
+	//遍历全部，共计lcount 条 linedirectx
 	for (UINT i = 0; i < lcount; ++i)
 	{
-		//get line floor inedex in Story[]
+		//get line floor inedex in vector Story[]
 		UINT pos_story = 0;
 		std::string Search_story = lineassign[i].Story;
-		auto _predicate_s = [Search_story](const Story & item){
+		auto _predicate_s = [Search_story](const Story & item)
+		{
 			return item.StoryName == Search_story;
 		};
 		auto itr = std::find_if(std::begin(story), std::end(story), _predicate_s);
-		if (itr >= std::end(story)){
+		if (itr >= std::end(story))
+		{
 			MessageBox(0, L"Can't match Line's Story", L"Warning", MB_OK); 
-			}else {
-				pos_story = std::distance(story.begin(), itr);
+		}
+		else 
+		{
+			pos_story = std::distance(story.begin(), itr);
 		}
 
-		//get line index in LinePtr[]
+		//get line index in vector LinePtr[]
 		UINT pos_lineconnect = 0;
 		std::string Search_lincct = lineassign[i].LineName;
 		auto _predicate_l = [Search_lincct](const LineConnect & item) {
@@ -677,7 +687,7 @@ void OptimMain::StructureGeometryBuffers_ifstream()
 		};
 		auto itr_l = std::find_if(std::begin(lineconnect), std::end(lineconnect), _predicate_l);
 		if (itr_l >= std::end(lineconnect)) {
-			MessageBox(0, L"Can't match Line's Story", L"Warning", MB_OK);
+			MessageBox(0, L"Can't match Line's Story, Close the App", L"Warning", MB_OK);
 		}
 		else {
 			pos_lineconnect = std::distance(lineconnect.begin(), itr_l);
@@ -685,39 +695,43 @@ void OptimMain::StructureGeometryBuffers_ifstream()
 		
 		lineassign[i].LineStart = lineconnect[pos_lineconnect].LineStart;
 		lineassign[i].LineEnd = lineconnect[pos_lineconnect].LineEnd;
+		lineassign[i].SpanFloor = lineconnect[pos_lineconnect].SpanFloor;
 
 		linedirectx[i].LineName = lineassign[i].LineName;
 		linedirectx[i].Story = lineassign[i].Story;
 		linedirectx[i].LineStart = lineassign[i].LineStart;
 		linedirectx[i].LineEnd = lineassign[i].LineEnd;
+		linedirectx[i].SpanFloor = lineassign[i].SpanFloor;		
 
-		UINT pos_p1 = 0;
+		UINT pos_pt1 = 0;
+		//search point p1 in Vertex::Basic32
 		std::string Search_p1 = linedirectx[i].LineStart;
 		auto _predicate_p1 = [Search_p1](const Vertex::Basic32 & item) {
 			return item.Pt_Num == Search_p1;
 		};
 		auto itr_p1 = std::find_if(std::begin(vertices), std::end(vertices), _predicate_p1);
 		if (itr_p1 >= std::end(vertices)) {
-			MessageBox(0, L"Can't match Line's Start Point", L"Warning", MB_OK);
+			MessageBox(0, L"Can't match Line's Start Point, Close the App", L"Warning", MB_OK);
 		}
 		else {
-			pos_p1 = std::distance(vertices.begin(), itr_p1);
+			pos_pt1 = std::distance(vertices.begin(), itr_p1);
 		}
-		linedirectx[i].LineSIndex = pos_story * Pt_Count + pos_p1;
-
-		UINT pos_p2 = 0;
+		linedirectx[i].LineSIndex = pos_story * Pt_Count + pos_pt1;
+		
+		UINT pos_pt2 = 0;
 		std::string Search_p2 = linedirectx[i].LineEnd;
 		auto _predicate_p2 = [Search_p2](const Vertex::Basic32 & item) {
 			return item.Pt_Num == Search_p2;
 		};
 		auto itr_p2 = std::find_if(std::begin(vertices), std::end(vertices), _predicate_p2);
 		if (itr_p2 >= std::end(vertices)) {
-			MessageBox(0, L"Can't match Line's Start Point", L"Warning", MB_OK);
+			MessageBox(0, L"Can't match Line's Start Point, Close the App", L"Warning", MB_OK);
 		}
 		else {
-			pos_p2 = std::distance(vertices.begin(), itr_p2);
+			pos_pt2 = std::distance(vertices.begin(), itr_p2);
 		}
-		linedirectx[i].LineEIndex = pos_story * Pt_Count + pos_p2;
+		//line的EndPt在vertex中的总索引 = （起始层 - 跨层数）x 每层点总数 + EndPt 当层的索引
+		linedirectx[i].LineEIndex = (pos_story - linedirectx[i].SpanFloor) * Pt_Count  + pos_pt2;
 	}
 
 	mIndexCount = 2 * lcount;		//points to reder are twice of lines
@@ -806,6 +820,131 @@ void OptimMain::StructureGeometryBuffers_ifstream()
 	ThrowIfFailed(md3dDevice->CreateBuffer(&ibd, &iinitData, &mTargetIB));
 }
 
+void OptimMain::FdtGeometryBuffers()
+{
+	UINT vcount = 0;
+	UINT lcount = 0;
+
+	struct PointSFCoord { std::string PtName; float PtX = 0.0f; float PtY = 0.0f; float PtZ = 0.0f; };
+	struct LineObject { std::string LineName, LineStart, LineEnd; };
+
+	std::deque<PointSFCoord> pointsfcoord;	//all pts stored here
+	std::deque<LineObject> lineobject;		//all lines stored here
+
+	std::ofstream fout("Models/SAFE_copy.txt");
+
+	OPENFILENAME ofn;
+	wchar_t FileNameTXT[250];
+	//Initialize OPENFILENAME
+	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);                                              //size of structure
+	ofn.hwndOwner = 0;                                                       //parent window
+	ofn.lpstrFile = NULL;                                                       //path of open file is ofn.lpstrFile, short in szFile
+	ofn.lpstrFileTitle = FileNameTXT;                                            //Name of File
+	ofn.nMaxFile = sizeof(ofn);
+	ofn.lpstrFilter = L"ALL\0*.*\0Text\0*.TXT\0*.DOC\0*.BAK";
+	ofn.nFilterIndex = 1;
+	ofn.nMaxFileTitle = sizeof(ofn);
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+
+	if (!GetOpenFileName(&ofn))
+	{
+		MessageBox(0, L"Get Open File Name Failed", L"FBI WARNING", MB_OK);
+	}
+	else
+	{
+
+		std::string TextHandler;
+		std::ifstream SM_read(FileNameTXT);
+
+		if (!SM_read.is_open()) {
+			MessageBox(0, L"Import Models.txt Failed.", 0, 0);
+		}
+		else
+		{
+			bool FoundPt = false;
+			bool FoundLine = false;
+
+			//control the reading by found or not found status
+			while (std::getline(SM_read, TextHandler))
+			{
+				std::istringstream iss;
+				std::string skip;
+
+				std::string TempStrX, TempStrY, TempStrZ;
+				auto Pt_pos = TextHandler.find("POINT COORDINATES");
+				if (Pt_pos != std::string::npos)
+				{
+					FoundPt = true;			//reading pts start
+					continue;
+				}
+
+				if (std::all_of(TextHandler.begin(), TextHandler.end(), isspace))	////reading pts end
+				{
+					FoundPt = false;
+					FoundLine = false;
+					continue;
+				}
+				if (FoundPt == true && !TextHandler.empty())
+				{
+					iss.str(TextHandler);
+					PointSFCoord ptsf;
+					if (iss >> ptsf.PtName >> TempStrX >> TempStrY >> TempStrZ)
+					{
+						ptsf.PtName = ptsf.PtName.substr(6, string::npos);		//refer to the $sf file for position
+						TempStrX = TempStrX.substr(8, string::npos);
+						TempStrY = TempStrY.substr(8, string::npos);
+						TempStrZ = TempStrZ.substr(8, string::npos);
+						ptsf.PtX = std::stof(TempStrX.c_str());
+						ptsf.PtY = std::stof(TempStrY.c_str());
+						ptsf.PtZ = std::stof(TempStrZ.c_str());
+						pointsfcoord.emplace_back(std::move(ptsf));
+					}
+				}
+
+				auto Line_pos = TextHandler.find("OBJECT GEOMETRY - LINES");
+				if (Line_pos != std::string::npos)
+				{
+					FoundLine = true;			//reading lines start
+					continue;
+				}
+
+				if (FoundLine == true && !TextHandler.empty())
+				{
+					iss.str(TextHandler);
+					LineObject lo;
+					if (iss >> lo.LineName >> lo.LineStart >> lo.LineEnd)
+					{
+						lo.LineName = lo.LineName.substr(5, string::npos);
+						lo.LineStart = lo.LineStart.substr(7, string::npos);
+						lo.LineEnd = lo.LineEnd.substr(7, string::npos);
+						lineobject.emplace_back(std::move(lo));
+					}
+				}
+
+			}//end of while
+		}
+		SM_read.close();
+	}// end reading
+
+	fout << "SAFE output" << endl;
+	for (UINT i = 0; i < pointsfcoord.size(); ++i)
+	{
+		fout << pointsfcoord[i].PtName << "\t " << pointsfcoord[i].PtX << "\t "
+			<< pointsfcoord[i].PtY << "\t " << pointsfcoord[i].PtZ << endl;
+
+
+
+	}
+	for (UINT i = 0; i < lineobject.size(); ++i)
+	{
+		fout << lineobject[i].LineName << "\t " << lineobject[i].LineStart << "\t "
+		<< lineobject[i].LineEnd << endl;
+	}
+	fout.close();
+	MessageBox(0, L"SAFE Done", 0, MB_OK);
+}
 void OptimMain::ImportDLLLTest()
 {
 
@@ -875,6 +1014,7 @@ void OptimMain::ImportDLLL()
 					iss.str(TextHandler);
 					Beam bm;
 					if (iss >> bm.Floor >> bm.Name >> bm.LdCase)
+					{
 						bm.Loc = 0;
 						bm.P = 0;
 						bm.V2 = 0;
@@ -883,6 +1023,7 @@ void OptimMain::ImportDLLL()
 						bm.M2 = 0;
 						bm.M3 = 0;
 						beam.emplace_back(std::move(bm));
+					}
 					
 				}
 
@@ -893,17 +1034,19 @@ void OptimMain::ImportDLLL()
 					Beam bm;
 					std::string a, b, c, d, e, f, g;
 					if (iss >> a >> b >> c >> d >> e >> f >> g)
+					{
 						bm.Loc = std::stof(a.c_str());
-					bm.P = std::stof(b.c_str());
-					bm.V2 = std::stof(c.c_str());
-					bm.V3 = std::stof(d.c_str());
-					bm.T = std::stof(e.c_str());
-					bm.M2 = std::stof(f.c_str());
-					bm.M3 = std::stof(g.c_str());
-					bm.Floor = beam.back().Floor;
-					bm.Name = beam.back().Name;
-					bm.LdCase = beam.back().LdCase;
-					beam.emplace_back(std::move(bm));
+						bm.P = std::stof(b.c_str());
+						bm.V2 = std::stof(c.c_str());
+						bm.V3 = std::stof(d.c_str());
+						bm.T = std::stof(e.c_str());
+						bm.M2 = std::stof(f.c_str());
+						bm.M3 = std::stof(g.c_str());
+						bm.Floor = beam.back().Floor;
+						bm.Name = beam.back().Name;
+						bm.LdCase = beam.back().LdCase;
+						beam.emplace_back(std::move(bm));
+					}
 				}
 			}
 		}
@@ -934,335 +1077,6 @@ void OptimMain::ImportDLLL_MMAP()
 {
 	//To_be_done
 }
-
-void OptimMain::StructureGeometryBuffers_fread(){}
-//void OptimMain::StructureGeometryBuffers_fread()
-//{	
-//	int ImportDLLLfread_Start = clock();
-//	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-//
-//	FILE *pFile;
-//	long lSize;
-//	char *StringPtr;						//in 32bit platform, pointer is 32bit
-//	size_t result;
-//
-//	pFile = std::fopen("Models/1. Block 2_Full.txt", "rb");
-//	if (pFile == NULL) 
-//	{	
-//		MessageBox(0, L"fopen in fread Failed!", L"FBI WARNING", MB_OK);
-//		fputs("File error", stderr); 
-//		//exit(1); 
-//	}
-//
-//	// obtain file size:
-//	std::fseek(pFile, 0, SEEK_END);	//将文件内部的指针指向文件末尾
-//	lSize = std::ftell(pFile);		//获取文件长度，（得到文件位置指针当前位置相对于文件首的偏移字节数）
-//	std::rewind(pFile);				//将文件内部的指针重新指向一个流的开头
-//
-//	// allocate memory to contain the whole file:
-//	//申请内存空间，lsize*sizeof(char)是为了更严谨，16位上char占一个字符，其他机器上可能变化
-//	StringPtr = (char*)malloc(sizeof(char)*lSize);
-//	if (StringPtr == NULL) 
-//	{ 
-//		MessageBox(0, L"StringPtr Failed!", L"FBI WARNING", MB_OK); 
-//		std::fputs("Memory error", stderr);
-//		//exit(2); 
-//	}
-//
-//	//用malloc申请的内存是没有初始值的，如果不赋值会导致写入的时候找不到结束标志符而出现内存比实际申请值大，写入数据后面跟随乱码的情况
-//	std::memset(StringPtr, 0, lSize * sizeof(char));//将内存空间都赋值为‘\0’
-//
-//	// copy the file into the StringPtr:
-//	result = std::fread(StringPtr, 1, lSize, pFile);	//1 for sizeof(char);
-//	if (result != lSize) 
-//	{	
-//		MessageBox(0, L"result Failed!", L"FBI WARNING", MB_OK);
-//		fputs("Reading error", stderr); 
-//		//exit(3); 
-//	}
-//	/* the whole file is now loaded in the memory StringPtr. */
-//
-//	//Fast Wirite
-//	/*FILE *writeFile = fopen("Models/DLLL_copy_fwrite.txt", "w");
-//	std::fwrite(StringPtr, 1, lSize, writeFile);*/
-//
-//	std::string FullString;
-//	FullString = StringPtr;
-//	
-//	//Debugging
-//	std::ofstream fout("Models/Etabs_copy_fout.txt");
-//	/*fout << FullString <<'\n';
-//	fout <<"FullString Length is "<< FullString.length()<< '\n';
-//	fout << "StringPtr Length is " << strlen(StringPtr)<<'\n';*/
-//
-//	UINT vcount = 0;
-//	UINT lcount = 0;
-//
-//	UINT Story_Count = 0;
-//	UINT Pt_Count = 0;
-//	UINT Pt_Total = 0;
-//	UINT Line_Count = 0;
-//	UINT LineAss_Count = 0;
-//	UINT MP_Count = 0;
-//
-//
-//	std::deque<Story> story;
-//	std::deque<MaterialProp> materialprop;
-//	std::deque<PointCoord> pointcoord;
-//	std::vector <std::vector<Point3D>> point3d;
-//
-//	std::deque<LineConnect> lineconnect;
-//	std::deque<LineAssign> lineassign;
-//
-//	XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
-//	XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
-//
-//	XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
-//	XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
-//
-//	
-//	std::stringstream FullStringStream(FullString);	//ifstream only accpet c-style string
-//	if(!FullStringStream)
-//	{
-//		fout << L"FullString = 0" << std::endl;
-//	}
-//	else
-//	{	
-//		std::string TextHandler;
-//		while (std::getline(FullStringStream, TextHandler))
-//		{	
-//			std::istringstream iss;
-//			std::string skip;
-//
-//			auto Story_pos = TextHandler.find(" STORY ");
-//			if (Story_pos != std::string::npos)
-//			{	
-//				iss.str(TextHandler);
-//				Story st;
-//				if (iss >> skip >> st.StoryName >> skip >> st.StoryHeight)
-//					story.emplace_back(std::move(st));	//move: move into and delete the original 
-//			}
-//
-//			auto Pt_pos = TextHandler.find("  POINT ");
-//			if (Pt_pos != std::string::npos)
-//			{	
-//				iss.str(TextHandler);
-//				PointCoord pt;
-//				if (iss >> skip>> pt.PtName >> pt.PtX >> pt.PtY)
-//				pointcoord.emplace_back(std::move(pt));
-//			}
-//
-//			auto Line_pos = TextHandler.find("  LINE  ");
-//			if (Line_pos != std::string::npos)
-//			{
-//				iss.str(TextHandler);
-//				LineConnect lc;
-//				if (iss >> skip			>> lc.LineName
-//						>> lc.LineType	>> lc.LineStart
-//						>> lc.LineEnd	>> lc.LineFloor)
-//				lineconnect.emplace_back(std::move(lc));
-//			}
-//
-//			auto LineAss_pos = TextHandler.find(" LINEASSIGN ");
-//			if (LineAss_pos != std::string::npos)
-//			{
-//				iss.str(TextHandler);
-//				LineAssign la;
-//				if (iss >> skip >> la.LineName >> la.Story)
-//					lineassign.emplace_back(std::move(la));
-//			}
-//
-//		}//end of while
-//		
-//		
-//	}// end reading
-//
-//	Story_Count = story.size();
-//	float BaseLevel = story.back().StoryHeight;
-//	story.back().TotalHeight = story.back().StoryHeight;	//1st element
-//	for (UINT i = 1; i < story.size(); i++)					//except for 1st element
-//	{
-//		story[story.size() - 1 - i].TotalHeight = story[story.size() - i].TotalHeight + story[story.size() - 1 - i].StoryHeight;
-//	}
-//
-//	Pt_Count = pointcoord.size();
-//	Pt_Total = pointcoord.size()*story.size();
-//	LineAss_Count = lineassign.size();
-//
-//	vcount = Pt_Total;
-//	lcount = LineAss_Count;
-//
-//	//expan 2D points to 3D
-//	point3d.resize(story.size(), vector<Point3D>(pointcoord.size()));
-//
-//	for (UINT i = 0; i < story.size(); i++)
-//	{
-//		for (UINT j = 0; j < pointcoord.size(); j++)
-//		{
-//			point3d[i][j].PtName = pointcoord[j].PtName;
-//			point3d[i][j].PtX = pointcoord[j].PtX;
-//			point3d[i][j].PtY = pointcoord[j].PtY;
-//			point3d[i][j].PtZ = story[i].TotalHeight;
-//		}
-//	}
-//
-//	std::vector <Vertex::Basic32> vertices(vcount);
-//	std::vector <LineDirectx> linedirectx(lcount);
-//
-//	for (UINT i = 0; i < Story_Count; i++)
-//	{
-//		for (UINT j = 0; j < Pt_Count; j++)
-//		{
-//			vertices[i * Pt_Count + j].Pt_Num = point3d[i][j].PtName;
-//			vertices[i * Pt_Count + j].Pos.x = point3d[i][j].PtX;
-//			vertices[i * Pt_Count + j].Pos.y = point3d[i][j].PtY;
-//			vertices[i * Pt_Count + j].Pos.z = point3d[i][j].PtZ;
-//			vertices[i * Pt_Count + j].Normal.x = 0;
-//			vertices[i * Pt_Count + j].Normal.y = 0;
-//			vertices[i * Pt_Count + j].Normal.z = 1;
-//
-//			XMVECTOR P = DirectX::XMLoadFloat3(&vertices[i * Pt_Count + j].Pos);
-//			vMin = XMVectorMin(vMin, P);
-//			vMax = XMVectorMax(vMax, P);
-//		}
-//	}
-//
-//	DirectX::XMStoreFloat3(&mSkullBox.Center, 0.5f*(vMin + vMax));
-//	DirectX::XMStoreFloat3(&mSkullBox.Extents, 0.5f*(vMax - vMin));
-//
-//	for (UINT i = 0; i < lcount; ++i)
-//	{
-//		//get line floor inedex in Story[]
-//		UINT j = 0;
-//		while (lineassign[i].Story != story[j].StoryName)
-//		{
-//			if (j < Story_Count)
-//			{
-//				j++;
-//			}
-//			else { MessageBox(0, L"Can't match Line's Story", L"Warning", MB_OK); }
-//		}
-//
-//		//get line index in LinePtr[]
-//		UINT k = 0;
-//		while (lineassign[i].LineName != lineconnect[k].LineName)
-//		{
-//			k++;
-//		}
-//		lineassign[i].LineStart = lineconnect[k].LineStart;
-//		lineassign[i].LineEnd = lineconnect[k].LineEnd;
-//
-//		linedirectx[i].LineName = lineassign[i].LineName;
-//		linedirectx[i].Story = lineassign[i].Story;
-//		linedirectx[i].LineStart = lineassign[i].LineStart;
-//		linedirectx[i].LineEnd = lineassign[i].LineEnd;
-//
-//		UINT p = 0;
-//		while (vertices[p].Pt_Num != linedirectx[i].LineStart)
-//		{
-//			if (p < Pt_Total) { p++; }
-//			else { MessageBox(0, L"Can't match Vertices's Pt with Line's Pt", L"Warning", MB_OK); }
-//		}
-//		linedirectx[i].LineSIndex = j * Pt_Count + p;
-//
-//		UINT q = 0;
-//		while (vertices[q].Pt_Num != linedirectx[i].LineEnd)
-//		{
-//			q++;
-//		}
-//		linedirectx[i].LineEIndex = j * Pt_Count + q;
-//	}
-//
-//	mIndexCount = 2 * lcount;
-//	std::vector<UINT> indices(mIndexCount);
-//	for (UINT i = 0; i < lcount; ++i)
-//	{
-//		indices[i * 2 + 0] = linedirectx[i].LineSIndex;
-//		indices[i * 2 + 1] = linedirectx[i].LineEIndex;
-//	}
-//
-//	fout << '\n' << "Materials" << endl;
-//	for (UINT i = 0; i < materialprop.size(); ++i)
-//	{
-//		fout << materialprop[i].Name << " "	<< materialprop[i].Mass << " "
-//			<< materialprop[i].Weight << " "<< materialprop[i].ModulusE << " "
-//			<< materialprop[i].PossionR << std::endl;
-//	}
-//
-//	fout << '\n' << "Story: NOS = " << story.size() << endl;
-//	for (UINT i = 0; i <  story.size(); ++i)
-//	{
-//		fout << story[i].StoryName << " Height " << story[i].StoryHeight
-//			<< " mPD = " << story[i].TotalHeight << endl;
-//	}
-//
-//	fout <<'\n'<< "Points Coordinates: " << pointcoord.size()<<endl;
-//	for (UINT i = 0; i < story.size(); i++)
-//	{
-//		for (UINT j = 0; j < pointcoord.size(); j++)
-//		{	
-//			fout	<< " PtName: " << point3d[i][j].PtName
-//					<< " @ Floor: "<< story[i].StoryName
-//					<< " X: " << point3d[i][j].PtX
-//					<< " Y: " << point3d[i][j].PtY 
-//					<< " Z: " << point3d[i][j].PtZ << endl;
-//		}
-//	}
-//
-//		fout << '\n' << "LINE Connectivity: NOS = " << Line_Count << endl;
-//		for (UINT i = 0; i < lcount; ++i)
-//		{
-//			fout << linedirectx[i].LineName << " @ Floor " <<	linedirectx[i].Story << endl;
-//			fout << linedirectx[i].LineStart << " LineSIndex = " << linedirectx[i].LineSIndex << endl;
-//			fout << linedirectx[i].LineEnd << " LineEIndex = " << linedirectx[i].LineEIndex << endl;
-//		}	
-//		
-//		fout << '\n' << "LINE Assignment: NOS = " << lineassign.size() << endl;
-//		for (UINT i = 0; i < lineassign.size(); ++i)
-//		{
-//			fout << lineassign[i].LineName << " " << lineassign[i].LineStart << " " << lineassign[i].LineEnd << " " << lineassign[i].Story << endl;
-//		}
-//
-//	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-//	float time_sec = (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count()); //can use chrono::microseconds>
-//	fout << "Time elapsed = " << time_sec / 1000 << " s " << std::endl;
-//	fout.close();
-//
-//	//performance testing
-//	float ImportDLLLfread_Elapsed = (float(clock() - ImportDLLLfread_Start) / CLOCKS_PER_SEC);
-//	std::wstringstream wtss(L"");
-//	wtss << "Loading Read & Write Done in " << ImportDLLLfread_Elapsed << " s ";
-//	MessageBox(NULL, wtss.str().c_str(), L"MsgBox", MB_OK);
-//
-//	// terminate reading
-//	std::fclose(pFile);			
-//	//std::fclose(writeFile); 
-//	std::free(StringPtr);
-//	StringPtr = NULL;
-//
-//	D3D11_BUFFER_DESC vbd;
-//	vbd.Usage = D3D11_USAGE_IMMUTABLE;
-//	vbd.ByteWidth = sizeof(Vertex::Basic32) * vcount;
-//	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-//	vbd.CPUAccessFlags = 0;
-//	vbd.MiscFlags = 0;
-//	D3D11_SUBRESOURCE_DATA vinitData;
-//	vinitData.pSysMem = &vertices[0];
-//	ThrowIfFailed(md3dDevice->CreateBuffer(&vbd, &vinitData, &mTargetVB));
-//	
-//	// 
-//	// Pack the indices of all the meshes into one index buffer.
-//	//
-//	D3D11_BUFFER_DESC ibd;
-//	ibd.Usage = D3D11_USAGE_IMMUTABLE;
-//	ibd.ByteWidth = sizeof(UINT) * mIndexCount;
-//	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
-//	ibd.CPUAccessFlags = 0;
-//	ibd.MiscFlags = 0;
-//	D3D11_SUBRESOURCE_DATA iinitData;
-//	iinitData.pSysMem = &indices[0];
-//	ThrowIfFailed(md3dDevice->CreateBuffer(&ibd, &iinitData, &mTargetIB));
-//}
 
 void OptimMain::BuildInstancedBuffer()	//no need instanced for the moment
 {
