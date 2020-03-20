@@ -474,6 +474,7 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	}
 	return 0;
 }
+
 LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	PAINTSTRUCT ps;

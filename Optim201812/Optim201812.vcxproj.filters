@@ -116,6 +116,11 @@
     </None>
     <None Include="Resource Files\Optim.aps" />
     <None Include="OptimDemo.xmind" />
+    <None Include="Models\1. Block 2_F1GF.e2k" />
+    <None Include="Models\1. Block 2_Full.e2k" />
+    <None Include="Models\4. Block 2 Fdt.$sf" />
+    <None Include="Models\Music - Shortcut.lnk" />
+    <None Include="Models\skull - Copy.xlsx" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="FX\InstancedBasic.fx">
@@ -129,5 +134,14 @@
     <ResourceCompile Include="Resource Files\Optim.rc">
       <Filter>Resource Files</Filter>
     </ResourceCompile>
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Models\1. Block 2_Full.txt" />
+    <Text Include="Models\2. Block 2 Beam(DLLL).txt" />
+    <Text Include="Models\3. Block 2 Beam(WL).txt" />
+    <Text Include="Models\car.txt" />
+    <Text Include="Models\data.txt" />
+    <Text Include="Models\SAFE_copy.txt" />
+    <Text Include="Models\skull.txt" />
   </ItemGroup>
 </Project>

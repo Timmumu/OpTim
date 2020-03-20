@@ -26,7 +26,7 @@
 #include <directxcolors.h>
 #include <DirectXMath.h>
 
-// TODO: reference additional headers your program requires here
+
 #include "d3dUtil.h"
 
 #include "Vertex.h" 

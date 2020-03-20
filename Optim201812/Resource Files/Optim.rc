@@ -45,7 +45,7 @@ BEGIN
     POPUP "&File"
     BEGIN
         MENUITEM "&Import Superstructure (E2k)", IDM_ImportE2k
-        MENUITEM "&Import Foundation (SAFE)",     IDM_ImportSF
+        MENUITEM "&Import Foundation (SAFE)",   IDM_ImportSF
         MENUITEM "&Import Superstructure (DL+LL)", IDM_ImportDLLL
         MENUITEM "&Import Superstructure (Wind Load)", IDM_ImportWL
         MENUITEM "E&xit",                       IDM_EXIT

@@ -23,32 +23,32 @@
     <ProjectGuid>{C4C35B0C-DAD9-4B0A-9FF6-9BE0D76FF645}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Optim201812</RootNamespace>
-    <WindowsTargetPlatformVersion>10.0.17134.0</WindowsTargetPlatformVersion>
+    <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|Win32'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>false</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|x64'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
-    <PlatformToolset>v141</PlatformToolset>
+    <PlatformToolset>v142</PlatformToolset>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>Unicode</CharacterSet>
   </PropertyGroup>
@@ -72,8 +72,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>D:\C++\Optim201901\Optim201812\Header;$(IncludePath)</IncludePath>
-    <LibraryPath>D:\C++\Optim201901\Optim201812\lib\Win32\Debug;$(LibraryPath)</LibraryPath>
+    <IncludePath>E:\Coding\C++\Optim201901\Optim201812\Header;$(IncludePath)</IncludePath>
+    <LibraryPath>E:\Coding\C++\Optim201901\Optim201812\lib\Win32\Debug;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\</IntDir>
   </PropertyGroup>
@@ -301,6 +301,11 @@
   <ItemGroup>
     <None Include="FX\InstancedBasic.cod" />
     <None Include="FX\InstancedBasic.fxo" />
+    <None Include="Models\1. Block 2_F1GF.e2k" />
+    <None Include="Models\1. Block 2_Full.e2k" />
+    <None Include="Models\4. Block 2 Fdt.$sf" />
+    <None Include="Models\Music - Shortcut.lnk" />
+    <None Include="Models\skull - Copy.xlsx" />
     <None Include="OptimDemo.xmind" />
     <None Include="Resource Files\Optim.aps" />
   </ItemGroup>
@@ -310,6 +315,15 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource Files\Optim.rc" />
+  </ItemGroup>
+  <ItemGroup>
+    <Text Include="Models\1. Block 2_Full.txt" />
+    <Text Include="Models\2. Block 2 Beam(DLLL).txt" />
+    <Text Include="Models\3. Block 2 Beam(WL).txt" />
+    <Text Include="Models\car.txt" />
+    <Text Include="Models\data.txt" />
+    <Text Include="Models\SAFE_copy.txt" />
+    <Text Include="Models\skull.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">
