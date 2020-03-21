@@ -126,8 +126,9 @@ D3DApp::D3DApp(HINSTANCE hInstance)
 
 D3DApp::~D3DApp()
 {	
+	//destructor, remember to destroy created class
 	//if (mRenderTargetView) mRenderTargetView->Release();
-
+	DestroyWindow(mhMainWnd);	
 	ReleaseCom(mRenderTargetView);
 	ReleaseCom(mDepthStencilView);
 	ReleaseCom(mSwapChain);
@@ -701,7 +702,7 @@ bool D3DApp::InitMainWindow()
 							mMainWndCaption.c_str(),
 							WS_OVERLAPPEDWINDOW, 
 							CW_USEDEFAULT, CW_USEDEFAULT, 
-							width, height, 0, 0, mhAppInst, 0);
+							width, height, 0, 0, mhAppInst, this);
 	if (!mhMainWnd)
 	{
 		MessageBox(0, L"CreateWindow Failed.", 0, 0);
@@ -963,9 +964,8 @@ void D3DApp::CalculateFrameStats()
 
 	frameCnt++;
 
-	// Compute averages over one second period.
-	
-	if ((mTimer.TotalTime() - timeElapsed) >= 1.0f)
+	// Compute averages in per one second period
+	if ((mTimer.TotalTime() - timeElapsed) >= 1.0f)		// if time elapsed > 1 second
 	{
 		float fps = (float)frameCnt; // fps = frameCnt / 1
 		float mspf = 1000.0f / fps;
