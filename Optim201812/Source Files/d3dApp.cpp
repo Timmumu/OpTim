@@ -3,9 +3,6 @@
 #include <WindowsX.h>
 #include <sstream>
 
-//include d3d11.lib to the linker
-#pragma comment(lib,"d3d11.lib")
-
 namespace
 {
 	// This is just used to forward Windows messages from a global window
@@ -157,6 +154,7 @@ float D3DApp::AspectRatio()const
 	return static_cast<float>(mClientWidth) / mClientHeight;
 }
 
+//Main Loop
 int D3DApp::Run()
 {	
 	MSG msg = { 0 };
@@ -164,14 +162,21 @@ int D3DApp::Run()
 	while (msg.message != WM_QUIT)
 	{
 		// If there are Window messages then process them.
-		if (PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
+		if (::PeekMessage(&msg, 0, 0, 0, PM_REMOVE))
 		{
-			TranslateMessage(&msg);
-			DispatchMessage(&msg);
+			::TranslateMessage(&msg);
+			::DispatchMessage(&msg);
 		}
 		// Otherwise, do animation/game stuff.
 		else
-		{
+		{	
+			// Start the Dear ImGui frame
+			ImGui_ImplDX11_NewFrame();
+			ImGui_ImplWin32_NewFrame();
+			ImGui::NewFrame();
+			ImGui::ShowDemoWindow(&show_demo_window);
+			//ImGUI end
+
 			mTimer.Tick();
 			if (!mAppPaused)
 			{
@@ -273,7 +278,6 @@ void D3DApp::OnResize()
 	mScreenViewport.Height = static_cast<float>(mClientHeight - 80);
 	mScreenViewport.MinDepth = 0.0f;
 	mScreenViewport.MaxDepth = 1.0f;
-
 	md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 }
 
@@ -708,10 +712,24 @@ bool D3DApp::InitMainWindow()
 		MessageBox(0, L"CreateWindow Failed.", 0, 0);
 		return false;
 	}
-	ShowWindow(mhMainWnd, SW_SHOW);
-	UpdateWindow(mhMainWnd);
+	::ShowWindow(mhMainWnd, SW_SHOW);
+	::UpdateWindow(mhMainWnd);
 
-	//Child Winodw for directx
+	// Setup Dear ImGui context
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsClassic();
+
+	// Setup Platform/Renderer bindings
+	ImGui_ImplWin32_Init(mhMainWnd);
+ 
+	//Create Child Winodw for rendering the figures
 	WNDCLASSEX wcexChild;
 	wcexChild.cbSize = sizeof(WNDCLASSEX);
 	wcexChild.style = CS_HREDRAW | CS_VREDRAW;
@@ -729,7 +747,9 @@ bool D3DApp::InitMainWindow()
 
 	if (!RegisterClassEx(&wcexChild))
 	{
-		MessageBox(0, L"RegisterClasswcexChild Failed.", L"FBI WARNING", 0);
+		std::wstringstream wtss(L"");
+		wtss << "RegisterClasswcexChild Failed in line" << __LINE__;	// << " in file " << __FILE__;
+		MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
 		return false;
 	}
 	// Compute window rectangle dimensions based on requested client area dimensions.
@@ -738,7 +758,7 @@ bool D3DApp::InitMainWindow()
 	int widthChild = Rchild.right - Rchild.left;
 	int heightChild = Rchild.bottom - Rchild.top;
 
-	DirectHwnd = CreateWindow(L"D3DWndClassName",
+	DirectHwnd = CreateWindow(L"D3DWndClassName",    
 		mMainWndCaption.c_str(),
 		WS_CHILD | WS_VISIBLE | WS_CAPTION
 		| WS_SYSMENU | WS_THICKFRAME
@@ -749,11 +769,13 @@ bool D3DApp::InitMainWindow()
 
 	if (!DirectHwnd)
 	{
-		MessageBox(0, L"CreateChildWindow Failed.", 0, 0);
+ 		std::wstringstream wtss(L"");
+		wtss << "CreateChildWindow Failed in line" << __LINE__;		// << " in file " << __FILE__;
+		MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
 		return false;
 	}
-	ShowWindow(DirectHwnd, SW_SHOW);
-	UpdateWindow(DirectHwnd);
+	::ShowWindow(DirectHwnd, SW_SHOW);
+	::UpdateWindow(DirectHwnd);
 
 	CreateButton();
 	CreateScrollbar();
@@ -874,29 +896,34 @@ bool D3DApp::InitDirect3D()
 	OutputDebugStringW(DebuggerMarker);*/
 
 	if (FAILED(hr))
-	{
-		MessageBox(0, L"Optim: D3D11CreateDevice Failed.", 0, 0);
+	{		 
+		std::wstringstream wtss(L"");
+		wtss << "Optim: D3D11CreateDevice Failed in line" << __LINE__;		// << " in file " << __FILE__;
+		MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
 		return false;
 	}
 
 	if (featureLevel != D3D_FEATURE_LEVEL_11_0)
 	{
-		MessageBox(0, L"Optim: Direct3D Feature Level 11 unsupported.", 0, 0);
+		std::wstringstream wtss(L"");
+		wtss << "Optim: Direct3D Feature Level 11 unsupported in line" << __LINE__;		// << " in file " << __FILE__;
+		MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
 		return false;
 	}
 	 
 	// Check 4X MSAA quality support for our back buffer format.
-	ThrowIfFailed(md3dDevice->CheckMultisampleQualityLevels(
-		DXGI_FORMAT_R8G8B8A8_UNORM, 4, &m4xMsaaQuality));
+	ThrowIfFailed(md3dDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, 4, &m4xMsaaQuality));
 	assert(m4xMsaaQuality > 0);	
 
 	// Fill out a DXGI_SWAP_CHAIN_DESC to describe our swap chain.
 	DXGI_SWAP_CHAIN_DESC sd;
-	sd.BufferDesc.Width = mClientWidth;
+	ZeroMemory(&sd, sizeof(DXGI_SWAP_CHAIN_DESC));							// clear out the struct for use
+
+	sd.BufferDesc.Width = mClientWidth;										// set the back buffer width, height
 	sd.BufferDesc.Height = mClientHeight;
 	sd.BufferDesc.RefreshRate.Numerator = 60;
 	sd.BufferDesc.RefreshRate.Denominator = 1;
-	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	sd.BufferDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;						// use 32-bit color
 	sd.BufferDesc.ScanlineOrdering = DXGI_MODE_SCANLINE_ORDER_UNSPECIFIED;
 	sd.BufferDesc.Scaling = DXGI_MODE_SCALING_UNSPECIFIED;
 
@@ -909,16 +936,17 @@ bool D3DApp::InitDirect3D()
 	// No MSAA
 	else
 	{
-		sd.SampleDesc.Count = 1;
-		sd.SampleDesc.Quality = 0;
+		sd.SampleDesc.Count = 1;											// how many multisamples
+		sd.SampleDesc.Quality = 0;											// multisample quality level
 	}
 
-	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;
-	sd.BufferCount = 1;
-	sd.OutputWindow = DirectHwnd;
-	sd.Windowed = true;
+	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;						// how swap chain is to be used
+	sd.BufferCount = 1;														// one back buffer
+	sd.OutputWindow = DirectHwnd;											// the window to be used
+	sd.Windowed = true;														//allow windowed/full-screen mode
 	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
-	sd.Flags = 0;
+	//sd.Flags = 0;
+	sd.Flags = DXGI_SWAP_CHAIN_FLAG_ALLOW_MODE_SWITCH;						// allow full-screen switching  //Alt-Enter to switch. TODO:Failed		
 
 	// To correctly create the swap chain, we must use the IDXGIFactory that was
 	// used to create the device.  If we tried to use a different IDXGIFactory instance
@@ -944,7 +972,11 @@ bool D3DApp::InitDirect3D()
 	// also need to be executed every time the window is resized.  So
 	// just call the OnResize method here to avoid code duplication.
 
+	//try1
+	ImGui_ImplDX11_Init(md3dDevice, md3dImmediateContext);
+
 	OnResize();
+
 
 	DebuggerMarker = L"DebuggerMarker is 3";
 	OutputDebugStringW(DebuggerMarker);
@@ -981,7 +1013,6 @@ void D3DApp::CalculateFrameStats()
 		frameCnt = 0;
 		timeElapsed += 1.0f;
 	}
-	
 }
 
 //--------------------------------------------------------------------------------------
@@ -989,26 +1020,10 @@ void D3DApp::CalculateFrameStats()
 //--------------------------------------------------------------------------------------
 void D3DApp::CleanupDevice()
 {	
-	
 	if (md3dImmediateContext) md3dImmediateContext->ClearState();
 	if (md3dDevice) md3dDevice->Release();
 	if (md3dImmediateContext) md3dImmediateContext->Release();
 	if (mSwapChain) mSwapChain->Release();
 	if (mRenderTargetView) mRenderTargetView->Release();
 	if (mDepthStencilView) mDepthStencilView->Release();
-
-	/*
-	if (g_pConstantBuffer) g_pConstantBuffer->Release();
-	if (g_pVertexBuffer) g_pVertexBuffer->Release();
-	if (g_pIndexBuffer) g_pIndexBuffer->Release();
-	if (g_pVertexLayout) g_pVertexLayout->Release();
-	if (g_pVertexShader) g_pVertexShader->Release();
-	if (g_pPixelShaderSolid) g_pPixelShaderSolid->Release();
-	if (g_pPixelShader) g_pPixelShader->Release();
-	if (g_pDepthStencil) g_pDepthStencil->Release();
-	if (g_pSwapChain1) g_pSwapChain1->Release();
-	if (g_pImmediateContext1) g_pImmediateContext1->Release();
-	if (g_pd3dDevice1) g_pd3dDevice1->Release();
-	
-	*/
 }

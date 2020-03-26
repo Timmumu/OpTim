@@ -20,16 +20,23 @@
 
 #include <conio.h>
 
-//#include <D3D11.h>	// directx 3d
+//#include <D3D11.h>					// directx 3d
 #include <d3d11_1.h>
 #include <d3dcompiler.h>  
 #include <directxcolors.h>
 #include <DirectXMath.h>
-
 
 #include "d3dUtil.h"
 
 #include "Vertex.h" 
 #include <map>
 #include <chrono> //for time elapsed
+
+
+//imgui begin
+#include "imgui.h"
+#include "imgui_impl_win32.h"
+#include "imgui_impl_dx11.h"
+
+//end of imgui
 

@@ -4,6 +4,12 @@
 #include "d3dUtil.h"
 #include <CommCtrl.h>
 
+//include d3d11.lib so that no need to link the lib in setting
+#pragma comment(lib, "d3d11.lib")
+#pragma comment(lib, "d3dcompiler.lib")			//#include <d3dcompiler.h> in OptimMain.h  Automatically link with d3dcompiler.lib for D3DCompile() below.
+#pragma comment(lib, "dxgi.lib")
+#pragma comment(lib, "dxguid.lib")
+
 class D3DApp //基类
 {
 public:
@@ -58,8 +64,8 @@ protected:
 	bool MouseWheelDown = false;
 
 	HINSTANCE mhAppInst;
-	HWND      mhMainWnd;
-	HWND	  DirectHwnd;
+	HWND      mhMainWnd;		//main window
+	HWND	  DirectHwnd;		//child window
 
 	bool      mAppPaused = false;
 	bool      mMinimized = false;
@@ -85,5 +91,10 @@ protected:
 	int mClientWidth;
 	int mClientHeight;
 	bool mEnable4xMsaa;
+
+	// Our state
+	bool show_demo_window = true;
+	bool show_another_window = false;
+	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
 
 };
