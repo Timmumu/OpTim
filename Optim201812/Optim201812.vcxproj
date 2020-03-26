@@ -72,7 +72,7 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>E:\Coding\C++\Optim201901\Optim201812\Header;$(IncludePath)</IncludePath>
+    <IncludePath>$(ProjectDir)Header;$(ProjectDir)imgui;$(IncludePath)</IncludePath>
     <LibraryPath>E:\Coding\C++\Optim201901\Optim201812\lib\Win32\Debug;$(LibraryPath)</LibraryPath>
     <OutDir>$(SolutionDir)$(Platform)\$(Configuration)\</OutDir>
     <IntDir>$(SolutionDir)$(Platform)\$(Configuration)\</IntDir>
@@ -114,7 +114,7 @@
     <Link>
       <SubSystem>Windows</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;effects11d.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>dxguid.lib;winmm.lib;comctl32.lib;effects11d.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>
     </Link>
@@ -173,7 +173,7 @@
       <OptimizeReferences>
       </OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>d3d11.lib;d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;effects11.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>d3dcompiler.lib;dxguid.lib;winmm.lib;comctl32.lib;effects11.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <GenerateMapFile>true</GenerateMapFile>
       <MapExports>true</MapExports>
     </Link>
@@ -229,6 +229,14 @@
     <ClInclude Include="Header\resource.h" />
     <ClInclude Include="Header\Vertex.h" />
     <ClInclude Include="Header\xnacollision.h" />
+    <ClInclude Include="imgui\imconfig.h" />
+    <ClInclude Include="imgui\imgui.h" />
+    <ClInclude Include="imgui\imgui_impl_dx11.h" />
+    <ClInclude Include="imgui\imgui_impl_win32.h" />
+    <ClInclude Include="imgui\imgui_internal.h" />
+    <ClInclude Include="imgui\imstb_rectpack.h" />
+    <ClInclude Include="imgui\imstb_textedit.h" />
+    <ClInclude Include="imgui\imstb_truetype.h" />
     <ClInclude Include="Resource Files\resource.h" />
   </ItemGroup>
   <ItemGroup>
@@ -268,6 +276,12 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="imgui\imgui.cpp" />
+    <ClCompile Include="imgui\imgui_demo.cpp" />
+    <ClCompile Include="imgui\imgui_draw.cpp" />
+    <ClCompile Include="imgui\imgui_impl_dx11.cpp" />
+    <ClCompile Include="imgui\imgui_impl_win32.cpp" />
+    <ClCompile Include="imgui\imgui_widgets.cpp" />
     <ClCompile Include="Source Files\d3dApp.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -285,6 +299,8 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
+      <DisableSpecificWarnings Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
+      </DisableSpecificWarnings>
     </ClCompile>
     <ClCompile Include="Source Files\Vertex.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
@@ -301,11 +317,6 @@
   <ItemGroup>
     <None Include="FX\InstancedBasic.cod" />
     <None Include="FX\InstancedBasic.fxo" />
-    <None Include="Models\1. Block 2_F1GF.e2k" />
-    <None Include="Models\1. Block 2_Full.e2k" />
-    <None Include="Models\4. Block 2 Fdt.$sf" />
-    <None Include="Models\Music - Shortcut.lnk" />
-    <None Include="Models\skull - Copy.xlsx" />
     <None Include="OptimDemo.xmind" />
     <None Include="Resource Files\Optim.aps" />
   </ItemGroup>
@@ -315,15 +326,6 @@
   </ItemGroup>
   <ItemGroup>
     <ResourceCompile Include="Resource Files\Optim.rc" />
-  </ItemGroup>
-  <ItemGroup>
-    <Text Include="Models\1. Block 2_Full.txt" />
-    <Text Include="Models\2. Block 2 Beam(DLLL).txt" />
-    <Text Include="Models\3. Block 2 Beam(WL).txt" />
-    <Text Include="Models\car.txt" />
-    <Text Include="Models\data.txt" />
-    <Text Include="Models\SAFE_copy.txt" />
-    <Text Include="Models\skull.txt" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

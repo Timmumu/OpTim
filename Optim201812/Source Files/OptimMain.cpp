@@ -24,12 +24,10 @@
 #include "Camera.h"
 #include "xnacollision.h"
 
-#pragma warning(disable:4996)	//to disable warning for using fopen, strcpy
-
+#pragma warning(disable:4996)	//This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
+ 
 using namespace std;
-//--------------------------------------------------------------------------------------
-// Structures
-//--------------------------------------------------------------------------------------
+
 
 //用struct定义派生类，默认的继承方式为public
 struct InstancedData
@@ -58,7 +56,9 @@ struct MaterialProp { std::string Name , Mass , Weight, ModulusE , PossionR ; };
 //Beam Forces
 struct Beam 
 {
-	std::string Floor = NULL, Name = NULL, LdCase = NULL;
+	std::string Floor;
+	std::string Name;
+	std::string LdCase;
 	float Loc = 0.0f, P = 0.0f, V2 = 0.0f, V3 = 0.0f, T = 0.0f, M2 = 0.0f, M3 = 0.0f;
 };
 
