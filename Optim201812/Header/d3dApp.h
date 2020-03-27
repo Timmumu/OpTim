@@ -4,6 +4,7 @@
 #include "d3dUtil.h"
 #include <CommCtrl.h>
 
+
 //include d3d11.lib so that no need to link the lib in setting
 #pragma comment(lib, "d3d11.lib")
 #pragma comment(lib, "d3dcompiler.lib")			//#include <d3dcompiler.h> in OptimMain.h  Automatically link with d3dcompiler.lib for D3DCompile() below.
@@ -45,6 +46,14 @@ public:
 	virtual void MouseMidDown(WPARAM btnState, int x, int y) { }
 	virtual void MouseMidUp(WPARAM btnState, int x, int y) { }
 
+	//imgui
+	void EnableImgui() noexcept;
+	void DisableImgui() noexcept;
+	bool IsImguiEnabled() const noexcept;
+
+	bool imguiEnabled = true;
+
+
 protected:
 	bool InitMainWindow();
 	void CreateButton();
@@ -57,8 +66,6 @@ protected:
 	void CalculateFrameStats();
 	
 	void CleanupDevice();
-
-protected:
 
 	bool MouseWheelUp = false;
 	bool MouseWheelDown = false;
@@ -95,6 +102,6 @@ protected:
 	// Our state
 	bool show_demo_window = true;
 	bool show_another_window = false;
-	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);
+	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);	//background color
 
 };
