@@ -170,13 +170,6 @@ int D3DApp::Run()
 		// Otherwise, do animation/game stuff.
 		else
 		{	
-			// Start the Dear ImGui frame
-			ImGui_ImplDX11_NewFrame();
-			ImGui_ImplWin32_NewFrame();
-			ImGui::NewFrame();
-			ImGui::ShowDemoWindow(&show_demo_window);
-			//ImGUI end
-
 			mTimer.Tick();
 			if (!mAppPaused)
 			{
@@ -228,6 +221,9 @@ void D3DApp::OnResize()
 	ID3D11Texture2D* backBuffer = 0;
 	ThrowIfFailed(mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer)));
 	ThrowIfFailed(md3dDevice->CreateRenderTargetView(backBuffer, 0, &mRenderTargetView));
+	
+	ImGui_ImplDX11_Init(md3dDevice, md3dImmediateContext);
+
 	ReleaseCom(backBuffer);
 	  
 	// Create the depth/stencil buffer and view.
@@ -714,20 +710,6 @@ bool D3DApp::InitMainWindow()
 	}
 	::ShowWindow(mhMainWnd, SW_SHOW);
 	::UpdateWindow(mhMainWnd);
-
-	// Setup Dear ImGui context
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsClassic();
-
-	// Setup Platform/Renderer bindings
-	ImGui_ImplWin32_Init(mhMainWnd);
  
 	//Create Child Winodw for rendering the figures
 	WNDCLASSEX wcexChild;
@@ -777,6 +759,20 @@ bool D3DApp::InitMainWindow()
 	::ShowWindow(DirectHwnd, SW_SHOW);
 	::UpdateWindow(DirectHwnd);
 
+	// Setup Dear ImGui context for child window
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsClassic();
+
+	ImGui_ImplWin32_Init(DirectHwnd);		// Setup Platform/Renderer bindings
+
+	//mfc's stuff
 	CreateButton();
 	CreateScrollbar();
 	CreateStatic();
@@ -942,7 +938,7 @@ bool D3DApp::InitDirect3D()
 
 	sd.BufferUsage = DXGI_USAGE_RENDER_TARGET_OUTPUT;						// how swap chain is to be used
 	sd.BufferCount = 1;														// one back buffer
-	sd.OutputWindow = DirectHwnd;											// the window to be used
+	sd.OutputWindow = DirectHwnd;											// bind d3d with which window
 	sd.Windowed = true;														//allow windowed/full-screen mode
 	sd.SwapEffect = DXGI_SWAP_EFFECT_DISCARD;
 	//sd.Flags = 0;
@@ -972,11 +968,10 @@ bool D3DApp::InitDirect3D()
 	// also need to be executed every time the window is resized.  So
 	// just call the OnResize method here to avoid code duplication.
 
-	//try1
+	//bind the ImGui with the d3d
 	ImGui_ImplDX11_Init(md3dDevice, md3dImmediateContext);
 
 	OnResize();
-
 
 	DebuggerMarker = L"DebuggerMarker is 3";
 	OutputDebugStringW(DebuggerMarker);
@@ -1026,4 +1021,28 @@ void D3DApp::CleanupDevice()
 	if (mSwapChain) mSwapChain->Release();
 	if (mRenderTargetView) mRenderTargetView->Release();
 	if (mDepthStencilView) mDepthStencilView->Release();
+
+	// Cleanup imgui
+	ImGui_ImplDX11_Shutdown();
+	ImGui_ImplWin32_Shutdown();
+	ImGui::DestroyContext();
+	DestroyWindow(mhMainWnd);
+	DestroyWindow(DirectHwnd);
+
+}
+
+
+void D3DApp::EnableImgui() noexcept
+{
+	imguiEnabled = true;
+}
+
+void D3DApp::DisableImgui() noexcept
+{
+	imguiEnabled = false;
+}
+
+bool D3DApp::IsImguiEnabled() const noexcept
+{
+	return imguiEnabled;
 }

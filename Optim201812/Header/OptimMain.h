@@ -30,13 +30,9 @@
 
 #include "Vertex.h" 
 #include <map>
-#include <chrono> //for time elapsed
+#include <chrono>						//for time elapsed
 
-
-//imgui begin
+//imgui
 #include "imgui.h"
-#include "imgui_impl_win32.h"
 #include "imgui_impl_dx11.h"
-
-//end of imgui
-
+#include "imgui_impl_win32.h"
