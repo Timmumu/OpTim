@@ -75,9 +75,10 @@ public:
 
 	bool Init();
 	void OnResize();
+	
+	void DrawImgui();
 	void UpdateScene(float dt);
-
-	void DrawScene();		//Example
+	void DrawScene();		
 
 	void OnMouseDown(WPARAM btnState, int x, int y);
 	void OnMouseUp(WPARAM btnState, int x, int y);
@@ -334,8 +335,8 @@ void OptimMain::UpdateScene(float dt)
 	mMainWndCaption = outs.str();
 }
 
-void OptimMain::DrawScene()
-{	
+void OptimMain::DrawImgui()
+{
 	// imgui begin frame
 	if (D3DApp::imguiEnabled)		//imguiEnable = true by default
 	{
@@ -349,22 +350,20 @@ void OptimMain::DrawScene()
 
 	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
 	{
-		static float f = 0.0f;
-		static int counter = 0;
-
+ 
 		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
 		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
 		ImGui::Checkbox("Another Window", &show_another_window);
 
-		ImGui::SliderFloat("float", &f, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
+		ImGui::SliderFloat("float", &slider1, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 		ImGui::ColorEdit3("clear color", (float*)& clear_color); // Edit 3 floats representing a color
 
-		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
-			counter++;
+ 		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+			ButtonCounter1++;
 		ImGui::SameLine();
-		ImGui::Text("counter = %d", counter);
+		ImGui::Text("ButtonCounter1 = %d", ButtonCounter1);
 
 		ImGui::Text("Application average %.3f ms/frame (%.1f FPS)", 1000.0f / ImGui::GetIO().Framerate, ImGui::GetIO().Framerate);
 		ImGui::End();
@@ -382,7 +381,10 @@ void OptimMain::DrawScene()
 
 	// Rendering
 	ImGui::Render();
+}
 
+void OptimMain::DrawScene()
+{	
 	md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, reinterpret_cast<const float*>(&Colors::Black));
 	md3dImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	md3dImmediateContext->IASetInputLayout(InputLayouts::InstancedBasic32);

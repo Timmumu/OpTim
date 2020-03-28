@@ -319,7 +319,6 @@
   <ItemGroup>
     <None Include="FX\InstancedBasic.cod" />
     <None Include="FX\InstancedBasic.fxo" />
-    <None Include="OptimDemo.xmind" />
     <None Include="Resource Files\Optim.aps" />
   </ItemGroup>
   <ItemGroup>
