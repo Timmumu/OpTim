@@ -25,6 +25,8 @@ public:
 
 	virtual bool Init() = 0;
 	virtual void OnResize() = 0;
+	
+	virtual void DrawImgui() = 0;
 	virtual void UpdateScene(float dt ) = 0;
 	virtual void DrawScene() = 0;
 
@@ -56,13 +58,9 @@ public:
 
 protected:
 	bool InitMainWindow();
-	void CreateButton();
-	void CreateScrollbar();
-	void CreateStatic();		//Text
-	void CreateCombobox();
-
 	bool InitDirect3D();
-	
+	bool InitImgui();
+
 	void CalculateFrameStats();
 	
 	void CleanupDevice();
@@ -99,9 +97,11 @@ protected:
 	int mClientHeight;
 	bool mEnable4xMsaa;
 
-	// Our state
+	// Our imgui state at the beginning
 	bool show_demo_window = true;
 	bool show_another_window = false;
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);	//background color
 
+	float slider1 = 0.0f;
+	unsigned int ButtonCounter1 = 0;
 };

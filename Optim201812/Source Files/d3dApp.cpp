@@ -159,6 +159,8 @@ int D3DApp::Run()
 {	
 	MSG msg = { 0 };
 	mTimer.Reset();
+
+	//
 	while (msg.message != WM_QUIT)
 	{
 		// If there are Window messages then process them.
@@ -166,6 +168,7 @@ int D3DApp::Run()
 		{
 			::TranslateMessage(&msg);
 			::DispatchMessage(&msg);
+			continue;
 		}
 		// Otherwise, do animation/game stuff.
 		else
@@ -175,6 +178,7 @@ int D3DApp::Run()
 			{
 				CalculateFrameStats();
 				UpdateScene(mTimer.DeltaTime());
+				DrawImgui();		//virtual func in d3d, defined in OptimMain
 				DrawScene();
 			}
 			else
@@ -199,6 +203,11 @@ bool D3DApp::Init()
 		return false;
 	}
 
+	if (!InitImgui())
+	{
+		OutputDebugStringW(L" InitImgui() in d3dApp.cpp failed.");
+		return false;
+	}
 	return true;
 }
 
@@ -221,8 +230,6 @@ void D3DApp::OnResize()
 	ID3D11Texture2D* backBuffer = 0;
 	ThrowIfFailed(mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer)));
 	ThrowIfFailed(md3dDevice->CreateRenderTargetView(backBuffer, 0, &mRenderTargetView));
-	
-	ImGui_ImplDX11_Init(md3dDevice, md3dImmediateContext);
 
 	ReleaseCom(backBuffer);
 	  
@@ -277,14 +284,13 @@ void D3DApp::OnResize()
 	md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 }
 
-//--------------------------------------------------------------------------------------
-// Called every time the application receives a message
-//--------------------------------------------------------------------------------------
+// Forward declare message handler from imgui_impl_win32.cpp
+extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
 LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	PAINTSTRUCT ps;
-	HDC hdc;
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+		return true;
 
 	switch (message)
 	{
@@ -361,7 +367,8 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		}
 		return 0;//end of WM_Size
 
-				 // WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
+
+		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
 	case WM_ENTERSIZEMOVE:
 		mAppPaused = true;
 		mResizing = true;
@@ -462,8 +469,13 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	}
 
 	case WM_PAINT:
-		hdc = BeginPaint(hWnd, &ps);
-		EndPaint(hWnd, &ps);
+		/*hdc = BeginPaint(hWnd, &ps);		//childwindow's paint is not reuqired
+		EndPaint(hWnd, &ps);*/
+		break;
+
+	case WM_SYSCOMMAND:
+		if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
+			return 0;
 		break;
 
 	case WM_DESTROY:
@@ -473,7 +485,7 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	default:
 		return DefWindowProc(hWnd, message, wParam, lParam);
 	}
-	return 0;
+	return DefWindowProc(hWnd, message, wParam, lParam); 
 }
 
 LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
@@ -656,12 +668,12 @@ LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	}
 	
 	case WM_PAINT:
-		hdc = BeginPaint(hWnd, &ps);
+		hdc = BeginPaint(hWnd, &ps);	//this paint is essential for whole project
 		EndPaint(hWnd, &ps);
 		break;
 
 	case WM_DESTROY:
-		PostQuitMessage(0);
+		::PostQuitMessage(0);
 		return 0;
 
 	default:
@@ -744,7 +756,7 @@ bool D3DApp::InitMainWindow()
 		mMainWndCaption.c_str(),
 		WS_CHILD | WS_VISIBLE | WS_CAPTION
 		| WS_SYSMENU | WS_THICKFRAME
-		| WS_MINIMIZEBOX | WS_MAXIMIZEBOX,
+		| WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_OVERLAPPEDWINDOW,
 		CW_USEDEFAULT, 
 		CW_USEDEFAULT,
 		widthChild, heightChild, mhMainWnd, 0, mhAppInst, 0);
@@ -759,112 +771,7 @@ bool D3DApp::InitMainWindow()
 	::ShowWindow(DirectHwnd, SW_SHOW);
 	::UpdateWindow(DirectHwnd);
 
-	// Setup Dear ImGui context for child window
-	IMGUI_CHECKVERSION();
-	ImGui::CreateContext();
-	ImGuiIO& io = ImGui::GetIO(); (void)io;
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
-	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
-
-	// Setup Dear ImGui style
-	ImGui::StyleColorsDark();
-	//ImGui::StyleColorsClassic();
-
-	ImGui_ImplWin32_Init(DirectHwnd);		// Setup Platform/Renderer bindings
-
-	//mfc's stuff
-	CreateButton();
-	CreateScrollbar();
-	CreateStatic();
-	CreateCombobox();
-
 	return true;
-}
-
-void D3DApp::CreateButton()
-{	
-	HWND Button = CreateWindow(
-		L"BUTTON",  // Predefined class; Unicode assumed 
-		L"PRINT",      // Button text 
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
-		10,         // x position 
-		10,         // y position 
-		80,        // Button width
-		50,        // Button height
-		mhMainWnd,     // Parent window
-		NULL,       // No menu.
-		(HINSTANCE)GetWindowLong(mhMainWnd, GWL_HINSTANCE),
-		NULL);      // Pointer not needed.
-}
-
-void D3DApp::CreateScrollbar()
-{
-	HWND Scrollbar = CreateWindow(
-		L"SCROLLBAR",  // Predefined class; Unicode assumed 
-		L"PRINT",      // Button text 
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
-		10,         // x position 
-		mClientHeight -100,         // y position 
-		30,        // Button width
-		100,        // Button height
-		mhMainWnd,     // Parent window
-		NULL,       // No menu.
-		(HINSTANCE)GetWindowLong(mhMainWnd, GWL_HINSTANCE),
-		NULL);      // Pointer not needed.
-}
-
-void D3DApp::CreateCombobox()
-{
-	HWND Combobox = CreateWindow(WC_COMBOBOX, TEXT(""),
-		CBS_DROPDOWN | CBS_HASSTRINGS | WS_CHILD | WS_OVERLAPPED | WS_VISIBLE,
-		10,         // x position 
-		190,         // y position 
-		100,        // Button width
-		200,        // Height of drop down list
-		mhMainWnd,     // Parent window
-		NULL,
-		(HINSTANCE)GetWindowLong(mhMainWnd, GWL_HINSTANCE),
-		NULL);      // Pointer not needed.
-
-	TCHAR Planets[9][10] =
-	{
-		TEXT("Mercury"), TEXT("Venus"), TEXT("Terra"), 
-		TEXT("Mars"), TEXT("Jupiter"), TEXT("Saturn"), 
-		TEXT("Uranus"), TEXT("Neptune"), TEXT("Pluto")
-	};
-
-	TCHAR A[16];
-	int  k = 0;
-
-	memset(&A, 0, sizeof(A));
-	for (k = 0; k <= 8; k += 1)
-	{
-		wcscpy_s(A, sizeof(A) / sizeof(TCHAR), (TCHAR*)Planets[k]);
-
-		// Add string to combobox.
-		SendMessage(Combobox, (UINT)CB_ADDSTRING, (WPARAM)0, (LPARAM)A);
-	}
-
-	// Send the CB_SETCURSEL message to display an initial item in the selection field  
-	SendMessage(Combobox, CB_SETCURSEL, (WPARAM)2, (LPARAM)0);
-}
-
-
-void D3DApp::CreateStatic()
-{
-	HWND Static = CreateWindow(
-		L"STATIC",  // Predefined class; Unicode assumed 
-		L"PRINT",      // Button text 
-		WS_TABSTOP | WS_VISIBLE | WS_CHILD | BS_DEFPUSHBUTTON,  // Styles 
-		10,         // x position 
-		280,         // y position 
-		100,        // Button width
-		80,        // Button height
-		mhMainWnd,     // Parent window
-		NULL,       // No menu.
-		(HINSTANCE)GetWindowLong(mhMainWnd, GWL_HINSTANCE),
-		NULL);      // Pointer not needed.
-
 }
 
 bool D3DApp::InitDirect3D()
@@ -969,8 +876,7 @@ bool D3DApp::InitDirect3D()
 	// just call the OnResize method here to avoid code duplication.
 
 	//bind the ImGui with the d3d
-	ImGui_ImplDX11_Init(md3dDevice, md3dImmediateContext);
-
+ 
 	OnResize();
 
 	DebuggerMarker = L"DebuggerMarker is 3";
@@ -979,6 +885,25 @@ bool D3DApp::InitDirect3D()
 	return true;	
 }
 
+
+bool D3DApp::InitImgui()
+{
+	// Setup Dear ImGui context for child window 
+	IMGUI_CHECKVERSION();
+	ImGui::CreateContext();
+	ImGuiIO& io = ImGui::GetIO(); (void)io;
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableKeyboard;     // Enable Keyboard Controls
+	//io.ConfigFlags |= ImGuiConfigFlags_NavEnableGamepad;      // Enable Gamepad Controls
+
+	// Setup Dear ImGui style
+	ImGui::StyleColorsDark();
+	//ImGui::StyleColorsClassic();
+
+	// Setup Platform/Renderer bindings
+	ImGui_ImplWin32_Init(DirectHwnd);		
+	ImGui_ImplDX11_Init(md3dDevice, md3dImmediateContext);
+	return true;
+}
 
 void D3DApp::CalculateFrameStats()
 {
