@@ -11,6 +11,8 @@
 #pragma comment(lib, "dxgi.lib")
 #pragma comment(lib, "dxguid.lib")
 
+#pragma warning(disable:4100)	//disable warning in this header: unreferenced formal parameter
+
 class D3DApp //基类
 {
 public:
@@ -25,9 +27,9 @@ public:
 
 	virtual bool Init() = 0;
 	virtual void OnResize() = 0;
-	
+
 	virtual void DrawImgui() = 0;
-	virtual void UpdateScene(float dt ) = 0;
+	virtual void UpdateScene(float dt) = 0;
 	virtual void DrawScene() = 0;
 
 	virtual void BuildGeometryBuffers() = 0;		//car geometry
@@ -62,7 +64,7 @@ protected:
 	bool InitImgui();
 
 	void CalculateFrameStats();
-	
+
 	void CleanupDevice();
 
 	bool MouseWheelUp = false;
@@ -99,7 +101,7 @@ protected:
 
 	// Our imgui state at the beginning
 	bool show_demo_window = true;
-	bool show_another_window = false;
+	bool show_main_window = false;
 	ImVec4 clear_color = ImVec4(0.45f, 0.55f, 0.60f, 1.00f);	//background color
 
 	float slider1 = 0.0f;

@@ -25,7 +25,7 @@
 #include "xnacollision.h"
 
 #pragma warning(disable:4996)	//This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
- 
+
 using namespace std;
 
 
@@ -38,8 +38,8 @@ struct InstancedData
 
 struct LineDirectx
 {	//line所在层， 起点，终点， 起点索引，终点索引，跨层数
-	std::string LineName, Story ;
-	std::string LineStart , LineEnd;
+	std::string LineName, Story;
+	std::string LineStart, LineEnd;
 	UINT LineSIndex = 0;
 	UINT LineEIndex = 0;
 	UINT SpanFloor = 0;
@@ -49,12 +49,12 @@ struct LineDirectx
 struct Story { std::string StoryName;  float StoryHeight = 0.0; float TotalHeight = 0.0f; };
 struct PointCoord { std::string PtName; float PtX = 0.0f; float PtY = 0.0f; };
 struct Point3D { std::string PtName; float PtX = 0.0f; float PtY = 0.0f; float PtZ = 0.0f; };
-struct LineConnect { std::string LineName, LineType; string LineStart; string LineEnd ; UINT SpanFloor = 0; };
-struct LineAssign { std::string LineName; string Story; string LineStart; string LineEnd; UINT SpanFloor = 0;};
-struct MaterialProp { std::string Name , Mass , Weight, ModulusE , PossionR ; };
+struct LineConnect { std::string LineName, LineType; string LineStart; string LineEnd; UINT SpanFloor = 0; };
+struct LineAssign { std::string LineName; string Story; string LineStart; string LineEnd; UINT SpanFloor = 0; };
+struct MaterialProp { std::string Name, Mass, Weight, ModulusE, PossionR; };
 
 //Beam Forces
-struct Beam 
+struct Beam
 {
 	std::string Floor;
 	std::string Name;
@@ -75,10 +75,10 @@ public:
 
 	bool Init();
 	void OnResize();
-	
+
 	void DrawImgui();
 	void UpdateScene(float dt);
-	void DrawScene();		
+	void DrawScene();
 
 	void OnMouseDown(WPARAM btnState, int x, int y);
 	void OnMouseUp(WPARAM btnState, int x, int y);
@@ -97,7 +97,7 @@ private:
 
 	void ImportDLLL();
 	void ImportDLLLTest();
-	
+
 	void ImportDLLL_MMAP();
 
 private:
@@ -156,10 +156,9 @@ OptimMain::OptimMain(HINSTANCE hInstance)
 	mIndexCount(0), mInstancedBuffer(0),
 	mVisibleObjectCount(0), mFrustumCullingEnabled(true)
 {
-	//change App's Caption 1st time
+	//default settings  
 	mMainWndCaption = L"Optim";
-
-	srand((unsigned int)time((time_t *)NULL));
+	srand((unsigned int)time((time_t*)NULL));
 
 	mLastMousePos.x = 0;
 	mLastMousePos.y = 0;
@@ -167,7 +166,6 @@ OptimMain::OptimMain(HINSTANCE hInstance)
 	mCam.SetPosition(0.0f, 2.0f, -15.0f);
 
 	XMMATRIX I = DirectX::XMMatrixIdentity();
-
 	XMMATRIX skullScale = DirectX::XMMatrixScaling(0.5f, 0.5f, 0.5f);
 	XMMATRIX skullOffset = DirectX::XMMatrixTranslation(0.0f, 1.0f, 0.0f);
 	DirectX::XMStoreFloat4x4(&mSkullWorld, DirectX::XMMatrixMultiply(skullScale, skullOffset));
@@ -198,7 +196,7 @@ OptimMain::~OptimMain()
 	ReleaseCom(mTargetIB);
 	ReleaseCom(mInstancedBuffer);
 
-	
+
 	Effects::DestroyAll();
 	InputLayouts::DestroyAll();
 }
@@ -206,7 +204,7 @@ OptimMain::~OptimMain()
 bool OptimMain::Init()
 {
 	if (!D3DApp::Init())
-	{	
+	{
 		OutputDebugStringW(L" D3DApp::Init() in OptimMain.cpp failed.");
 		return false;
 	}
@@ -224,7 +222,7 @@ void OptimMain::OnResize()
 {
 	D3DApp::OnResize();
 
-	mCam.SetLens(0.25f*MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
+	mCam.SetLens(0.25f * MathHelper::Pi, AspectRatio(), 1.0f, 1000.0f);
 
 	// Build the frustum from the projection matrix in view space.
 	ComputeFrustumFromProjection(&mCamFrustum, &mCam.Proj());
@@ -234,37 +232,35 @@ void OptimMain::UpdateScene(float dt)
 {
 	// Control the camera. use W,S,A,D to Translation
 	if (GetAsyncKeyState('W') & 0x8000)
-		mCam.Walk(500.0f*dt);
+		mCam.Walk(500.0f * dt);				//mCam.Walk: zoom in and out
 	if (GetAsyncKeyState('S') & 0x8000)
-		mCam.Walk(-500.0f*dt);
+		mCam.Walk(-500.0f * dt);
 	if (GetAsyncKeyState('A') & 0x8000)
-		mCam.RightLeft(500.0f*dt);
+		mCam.RightLeft(500.0f * dt);
 	if (GetAsyncKeyState('D') & 0x8000)
-		mCam.RightLeft(-500.0f*dt);
+		mCam.RightLeft(-500.0f * dt);
 	if (GetAsyncKeyState('1') & 0x8000)
 		mFrustumCullingEnabled = true;
 	if (GetAsyncKeyState('2') & 0x8000)
 		mFrustumCullingEnabled = false;
 
 	if (GetAsyncKeyState(VK_UP) & 0x8000)
-		//mCam.Walk(500.0f*dt);			//zoom in and out
-		mCam.UpDown(500.0f*dt);
+		mCam.UpDown(500.0f * dt);			//mCam.UpDown: translate up and down
 	if (GetAsyncKeyState(VK_DOWN) & 0x8000)
-		//mCam.Walk(-500.0f*dt);
-		mCam.UpDown(-500.0f*dt);		//translate up and down
+		mCam.UpDown(-500.0f * dt);		
 	if (GetAsyncKeyState(VK_LEFT) & 0x8000)
-		mCam.RightLeft(500.0f*dt);		//translate left and right
+		mCam.RightLeft(-500.0f * dt);		//translate left and right
 	if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
-		mCam.RightLeft(-500.0f*dt);
+		mCam.RightLeft(500.0f * dt);
 
 	if (MouseWheelUp)
 	{
-		mCam.Walk(50000.0f*dt);
+		mCam.Walk(50000.0f * dt);
 		MouseWheelUp = false;
 	}
 	if (MouseWheelDown)
 	{
-		mCam.Walk(-50000.0f*dt);
+		mCam.Walk(-50000.0f * dt);
 		MouseWheelDown = false;
 	}
 
@@ -350,17 +346,16 @@ void OptimMain::DrawImgui()
 
 	// 2. Show a simple window that we create ourselves. We use a Begin/End pair to created a named window.
 	{
- 
 		ImGui::Begin("Hello, world!");                          // Create a window called "Hello, world!" and append into it.
 
 		ImGui::Text("This is some useful text.");               // Display some text (you can use a format strings too)
 		ImGui::Checkbox("Demo Window", &show_demo_window);      // Edit bools storing our window open/close state
-		ImGui::Checkbox("Another Window", &show_another_window);
+		ImGui::Checkbox("show_main_window", &show_main_window);
 
 		ImGui::SliderFloat("float", &slider1, 0.0f, 1.0f);            // Edit 1 float using a slider from 0.0f to 1.0f
 		ImGui::ColorEdit3("clear color", (float*)& clear_color); // Edit 3 floats representing a color
 
- 		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+		if (ImGui::Button("Button"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
 			ButtonCounter1++;
 		ImGui::SameLine();
 		ImGui::Text("ButtonCounter1 = %d", ButtonCounter1);
@@ -370,12 +365,16 @@ void OptimMain::DrawImgui()
 	}
 
 	// 3. Show another simple window.
-	if (show_another_window)
+	if (show_main_window)
 	{
-		ImGui::Begin("Another Window", &show_another_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
-		ImGui::Text("Hello from another window!");
+		ImGui::Begin("show_main_window", &show_main_window);   // Pass a pointer to our bool variable (the window will have a closing button that will clear the bool when clicked)
+		ImGui::Text("show_main_window!");
 		if (ImGui::Button("Close Me"))
-			show_another_window = false;
+			show_main_window = false;
+		if (ImGui::Button("Up"))
+		{	
+			mCam.UpDown(10.0f * 1);								//edit the unit 1 for further operation
+		}
 		ImGui::End();
 	}
 
@@ -384,12 +383,13 @@ void OptimMain::DrawImgui()
 }
 
 void OptimMain::DrawScene()
-{	
+{
 	md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, reinterpret_cast<const float*>(&Colors::Black));
 	md3dImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	md3dImmediateContext->IASetInputLayout(InputLayouts::InstancedBasic32);
 	md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
+	//draw imgui things
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
 	UINT stride[2] = { sizeof(Vertex::Basic32), sizeof(InstancedData) };
@@ -409,7 +409,7 @@ void OptimMain::DrawScene()
 
 	D3DX11_TECHNIQUE_DESC techDesc;
 	activeTech->GetDesc(&techDesc);
-	for (int32_t p = 0; p < techDesc.Passes; ++p)		//passes is int32_t, just to be consistenet for <
+	for (int32_t p = 0; p < techDesc.Passes; ++p)		//type of Passes are int32_t, be consistenet for p
 	{
 		md3dImmediateContext->IASetVertexBuffers(0, 2, vbs, stride, offset);
 		md3dImmediateContext->IASetIndexBuffer(mTargetIB, DXGI_FORMAT_R32_UINT, 0);
@@ -446,8 +446,8 @@ void OptimMain::OnMouseMove(WPARAM btnState, int x, int y)
 	if ((btnState & MK_LBUTTON) != 0)
 	{
 		// Make each pixel correspond to a quarter of a degree.
-		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
-		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
+		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
 		mCam.Pitch(dy);
 		mCam.RotateY(dx);
@@ -455,8 +455,8 @@ void OptimMain::OnMouseMove(WPARAM btnState, int x, int y)
 	if ((btnState & MK_MBUTTON) != 0)
 	{
 		// Make each pixel correspond to a quarter of a degree.
-		float dx = XMConvertToRadians(0.25f*static_cast<float>(x - mLastMousePos.x));
-		float dy = XMConvertToRadians(0.25f*static_cast<float>(y - mLastMousePos.y));
+		float dx = XMConvertToRadians(0.25f * static_cast<float>(x - mLastMousePos.x));
+		float dy = XMConvertToRadians(0.25f * static_cast<float>(y - mLastMousePos.y));
 
 		mCam.UpDown(50 * dy);
 		mCam.RightLeft(-50 * dx);
@@ -477,54 +477,88 @@ void OptimMain::MouseMidUp(WPARAM btnState, int x, int y)
 
 void OptimMain::BuildGeometryBuffers()
 {
-	std::ifstream fin("Models/car.txt");	//std::ifstream fin("Models/car.txt");
-	if (!fin)
-	{
-		MessageBox(0, L"Models/car.txt not found.", 0, 0);
-		return;
-	}
-	UINT vcount = 0;
-	UINT tcount = 0;
+	OPENFILENAME ofn;
+	wchar_t FileNameTXT[250];
+ 	ZeroMemory(&ofn, sizeof(ofn));
+	ofn.lStructSize = sizeof(ofn);                                              //size of structure
+	ofn.hwndOwner = 0;                                                       //parent window
+	ofn.lpstrFile = NULL;                                                       //path of open file is ofn.lpstrFile, short in szFile
+	ofn.lpstrFileTitle = FileNameTXT;                                            //Name of File
+	ofn.nMaxFile = sizeof(ofn);
+	ofn.lpstrFilter = L"ALL\0*.*\0Text\0*.TXT\0*.DOC\0*.BAK";
+	ofn.nFilterIndex = 1;
+	ofn.nMaxFileTitle = sizeof(ofn);
+	ofn.lpstrInitialDir = NULL;
+	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-	std::string skip;
-
-	fin >> skip >> vcount;
-	fin >> skip >> tcount;
-	fin >> skip >> skip >> skip >> skip;
-
+	/*UINT vcount = 1860;
+	UINT tcount = 1850;*/
+	UINT vcount = 4000;
+	UINT tcount = 4000;
 	XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
 	XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
 
 	XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
 	XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
 	std::vector<Vertex::Basic32> vertices(vcount);
-
-	for (UINT i = 0; i < vcount; ++i)
-	{
-		fin >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
-		fin >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
-
-		XMVECTOR P = DirectX::XMLoadFloat3(&vertices[i].Pos);
-
-		vMin = XMVectorMin(vMin, P);
-		vMax = XMVectorMax(vMax, P);
-	}
-
-	DirectX::XMStoreFloat3(&mSkullBox.Center, 0.5f*(vMin + vMax));
-	DirectX::XMStoreFloat3(&mSkullBox.Extents, 0.5f*(vMax - vMin));
-
-	fin >> skip;
-	fin >> skip;
-	fin >> skip;
-
-	mIndexCount = 3 * tcount;
 	std::vector<UINT> indices(mIndexCount);
-	for (UINT i = 0; i < tcount; ++i)
-	{
-		fin >> indices[i * 3 + 0] >> indices[i * 3 + 1] >> indices[i * 3 + 2];
-	}
-	fin.close();
 
+	if (!GetOpenFileName(&ofn))
+	{
+		MessageBox(0, L"Models/car.txt not found.", L"FBI WARNING", MB_OK);
+	}
+	else
+	{
+		std::string TextHandler;
+		std::ifstream SM_read(FileNameTXT);
+		if (!SM_read.is_open())
+		{
+			MessageBox(0, L"Import Models.txt Failed.", 0, 0);
+		}
+		else
+		{
+			while (std::getline(SM_read, TextHandler))
+			{
+				std::istringstream iss;
+				std::string skip;
+
+				iss >> skip >> vcount;
+				iss >> skip >> tcount;
+				iss >> skip >> skip >> skip >> skip;
+
+				for (UINT i = 0; i < vcount; ++i)
+				{
+					iss >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
+					iss >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
+					
+					//vertices[i].Pos.x is  0 here!
+					std::wstringstream wtss(L"");
+					wtss << vertices[i].Pos.x<< "Finished in line" << __LINE__;
+					MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
+
+					XMVECTOR P = DirectX::XMLoadFloat3(&vertices[i].Pos);
+
+					vMin = XMVectorMin(vMin, P);
+					vMax = XMVectorMax(vMax, P);
+				}
+
+				DirectX::XMStoreFloat3(&mSkullBox.Center, 0.5f * (vMin + vMax));
+				DirectX::XMStoreFloat3(&mSkullBox.Extents, 0.5f * (vMax - vMin));
+
+				iss >> skip;
+				iss >> skip;
+				iss >> skip;
+
+				mIndexCount = 3 * tcount;
+				
+				for (UINT i = 0; i < tcount; ++i)
+				{
+					iss >> indices[i * 3 + 0] >> indices[i * 3 + 1] >> indices[i * 3 + 2];
+				}
+			} //end of while
+		SM_read.close();
+		}
+	}
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage = D3D11_USAGE_IMMUTABLE;
 	vbd.ByteWidth = sizeof(Vertex::Basic32) * vcount;
@@ -599,8 +633,8 @@ void OptimMain::StructureGeometryBuffers()
 		MessageBox(0, L"Get Open File Name Failed", L"FBI WARNING", MB_OK);
 	}
 	else
-	{	
-	
+	{
+
 		std::string TextHandler;
 		std::ifstream SM_read(FileNameTXT);
 
@@ -666,7 +700,7 @@ void OptimMain::StructureGeometryBuffers()
 	}
 
 	Pt_Count = pointcoord.size();
-	Pt_Total = pointcoord.size()*story.size();
+	Pt_Total = pointcoord.size() * story.size();
 	LineAss_Count = lineassign.size();
 
 	vcount = Pt_Total;
@@ -708,8 +742,8 @@ void OptimMain::StructureGeometryBuffers()
 	}
 
 	//Initial Camera Setting
-	DirectX::XMStoreFloat3(&mSkullBox.Center, 0.5f*(vMin + vMax));
-	DirectX::XMStoreFloat3(&mSkullBox.Extents, 0.5f*(vMax - vMin));
+	DirectX::XMStoreFloat3(&mSkullBox.Center, 0.5f * (vMin + vMax));
+	DirectX::XMStoreFloat3(&mSkullBox.Extents, 0.5f * (vMax - vMin));
 
 	//遍历全部，共计lcount 条 linedirectx
 	for (UINT i = 0; i < lcount; ++i)
@@ -717,16 +751,16 @@ void OptimMain::StructureGeometryBuffers()
 		//get line floor inedex in vector Story[]
 		UINT pos_story = 0;
 		std::string Search_story = lineassign[i].Story;
-		auto _predicate_s = [Search_story](const Story & item)
+		auto _predicate_s = [Search_story](const Story& item)
 		{
 			return item.StoryName == Search_story;
 		};
 		auto itr = std::find_if(std::begin(story), std::end(story), _predicate_s);
 		if (itr >= std::end(story))
 		{
-			MessageBox(0, L"Can't match Line's Story", L"Warning", MB_OK); 
+			MessageBox(0, L"Can't match Line's Story", L"Warning", MB_OK);
 		}
-		else 
+		else
 		{
 			pos_story = std::distance(story.begin(), itr);
 		}
@@ -734,7 +768,7 @@ void OptimMain::StructureGeometryBuffers()
 		//get line index in vector LinePtr[]
 		UINT pos_lineconnect = 0;
 		std::string Search_lincct = lineassign[i].LineName;
-		auto _predicate_l = [Search_lincct](const LineConnect & item) {
+		auto _predicate_l = [Search_lincct](const LineConnect& item) {
 			return item.LineName == Search_lincct;
 		};
 		auto itr_l = std::find_if(std::begin(lineconnect), std::end(lineconnect), _predicate_l);
@@ -744,7 +778,7 @@ void OptimMain::StructureGeometryBuffers()
 		else {
 			pos_lineconnect = std::distance(lineconnect.begin(), itr_l);
 		}
-		
+
 		lineassign[i].LineStart = lineconnect[pos_lineconnect].LineStart;
 		lineassign[i].LineEnd = lineconnect[pos_lineconnect].LineEnd;
 		lineassign[i].SpanFloor = lineconnect[pos_lineconnect].SpanFloor;
@@ -753,12 +787,12 @@ void OptimMain::StructureGeometryBuffers()
 		linedirectx[i].Story = lineassign[i].Story;
 		linedirectx[i].LineStart = lineassign[i].LineStart;
 		linedirectx[i].LineEnd = lineassign[i].LineEnd;
-		linedirectx[i].SpanFloor = lineassign[i].SpanFloor;		
+		linedirectx[i].SpanFloor = lineassign[i].SpanFloor;
 
 		UINT pos_pt1 = 0;
 		//search point p1 in Vertex::Basic32
 		std::string Search_p1 = linedirectx[i].LineStart;
-		auto _predicate_p1 = [Search_p1](const Vertex::Basic32 & item) {
+		auto _predicate_p1 = [Search_p1](const Vertex::Basic32& item) {
 			return item.Pt_Num == Search_p1;
 		};
 		auto itr_p1 = std::find_if(std::begin(vertices), std::end(vertices), _predicate_p1);
@@ -769,10 +803,10 @@ void OptimMain::StructureGeometryBuffers()
 			pos_pt1 = std::distance(vertices.begin(), itr_p1);
 		}
 		linedirectx[i].LineSIndex = pos_story * Pt_Count + pos_pt1;
-		
+
 		UINT pos_pt2 = 0;
 		std::string Search_p2 = linedirectx[i].LineEnd;
-		auto _predicate_p2 = [Search_p2](const Vertex::Basic32 & item) {
+		auto _predicate_p2 = [Search_p2](const Vertex::Basic32& item) {
 			return item.Pt_Num == Search_p2;
 		};
 		auto itr_p2 = std::find_if(std::begin(vertices), std::end(vertices), _predicate_p2);
@@ -783,7 +817,7 @@ void OptimMain::StructureGeometryBuffers()
 			pos_pt2 = std::distance(vertices.begin(), itr_p2);
 		}
 		//line的EndPt在vertex中的总索引 = （起始层 - 跨层数）x 每层点总数 + EndPt 当层的索引
-		linedirectx[i].LineEIndex = (pos_story - linedirectx[i].SpanFloor) * Pt_Count  + pos_pt2;
+		linedirectx[i].LineEIndex = (pos_story - linedirectx[i].SpanFloor) * Pt_Count + pos_pt2;
 	}
 
 	mIndexCount = 2 * lcount;		//points to reder are twice of lines
@@ -793,8 +827,8 @@ void OptimMain::StructureGeometryBuffers()
 		indices[i * 2 + 0] = linedirectx[i].LineSIndex;
 		indices[i * 2 + 1] = linedirectx[i].LineEIndex;
 	}
-		
-	
+
+
 	fout << '\n' << "Materials" << endl;
 	for (UINT i = 0; i < materialprop.size(); ++i)
 	{
@@ -992,7 +1026,7 @@ void OptimMain::FdtGeometryBuffers()
 	for (UINT i = 0; i < lineobject.size(); ++i)
 	{
 		fout << lineobject[i].LineName << "\t " << lineobject[i].LineStart << "\t "
-		<< lineobject[i].LineEnd << endl;
+			<< lineobject[i].LineEnd << endl;
 	}
 	fout.close();
 	MessageBox(0, L"SAFE Done", 0, MB_OK);
@@ -1006,7 +1040,7 @@ void OptimMain::ImportDLLL()
 	int ImportDLLLTest_Start = clock();
 
 	std::deque<Beam> beam;
-	Beam *BeamPtr = NULL;
+	Beam* BeamPtr = NULL;
 	UINT BeamForCount = 0;
 	std::string TextHandler;
 
@@ -1023,7 +1057,7 @@ void OptimMain::ImportDLLL()
 	else
 	{
 		while (getline(fin, TextHandler))
-		{	
+		{
 			std::istringstream iss;
 			std::string skip;
 			getlineCount++;
@@ -1076,7 +1110,7 @@ void OptimMain::ImportDLLL()
 						bm.M3 = 0;
 						beam.emplace_back(std::move(bm));
 					}
-					
+
 				}
 
 				else //if (wordCount == 7)
@@ -1104,7 +1138,7 @@ void OptimMain::ImportDLLL()
 		}
 	}
 	fin.close();
-	float ImportDLLLTest_Read_Elapsed =( float(clock() - ImportDLLLTest_Start) / CLOCKS_PER_SEC);
+	float ImportDLLLTest_Read_Elapsed = (float(clock() - ImportDLLLTest_Start) / CLOCKS_PER_SEC);
 
 	//output for debugging
 	fout << "Time used for Reading: " << ImportDLLLTest_Read_Elapsed << "\n";
@@ -1116,10 +1150,10 @@ void OptimMain::ImportDLLL()
 			<< "\tLdCase= " << beam[i].LdCase << "\tLoc= " << beam[i].Loc
 			<< "\tP= " << beam[i].P << "\tV2= " << beam[i].V2 << "\tV3= " << beam[i].V3
 			<< "\tT= " << beam[i].T << "\tM2= " << beam[i].M2 << "\tM3= " << beam[i].M3 << "\n";
-			
+
 	}
-	float ImportDLLLTest_Write_Elapsed =( float(clock() - ImportDLLLTest_Start- ImportDLLLTest_Read_Elapsed) / CLOCKS_PER_SEC);
-	fout << "Time Elapsed for Writing: "<<ImportDLLLTest_Write_Elapsed<<"\n";
+	float ImportDLLLTest_Write_Elapsed = (float(clock() - ImportDLLLTest_Start - ImportDLLLTest_Read_Elapsed) / CLOCKS_PER_SEC);
+	fout << "Time Elapsed for Writing: " << ImportDLLLTest_Write_Elapsed << "\n";
 	std::wstringstream wtss(L"");
 	wtss << "Loading Read & Write Done in " << ImportDLLLTest_Read_Elapsed << " s And " << ImportDLLLTest_Write_Elapsed << " s ";
 	MessageBox(NULL, wtss.str().c_str(), L"MsgBox", MB_OK);
@@ -1134,15 +1168,15 @@ void OptimMain::BuildInstancedBuffer()	//no need instanced for the moment
 {
 	const int n = 1;
 	UINT m = max(n - 1, 1);
-	mInstancedData.resize(n*n*n);
+	mInstancedData.resize(n * n * n);
 
 	float width = 200.0f;
 	float height = 200.0f;
 	float depth = 200.0f;
 
-	float x = -0.5f*width;
-	float y = -0.5f*height;
-	float z = -0.5f*depth;
+	float x = -0.5f * width;
+	float y = -0.5f * height;
+	float z = -0.5f * depth;
 
 	float dx = width / m;
 	float dy = height / m;
@@ -1154,17 +1188,17 @@ void OptimMain::BuildInstancedBuffer()	//no need instanced for the moment
 			for (int j = 0; j < n; ++j)
 			{
 				// Position instanced along a 3D grid.
-				mInstancedData[k*n*n + i * n + j].World = XMFLOAT4X4(
+				mInstancedData[k * n * n + i * n + j].World = XMFLOAT4X4(
 					1.0f, 0.0f, 0.0f, 0.0f,
 					0.0f, 1.0f, 0.0f, 0.0f,
 					0.0f, 0.0f, 1.0f, 0.0f,
 					x + j * dx, y + i * dy, z + k * dz, 1.0f);
 
 				// yellow color.
-				mInstancedData[k*n*n + i * n + j].Color.x = 0.0f;	//red
-				mInstancedData[k*n*n + i * n + j].Color.y = 100.0f;	//yellow
-				mInstancedData[k*n*n + i * n + j].Color.z = 0.0f;	//blue
-				mInstancedData[k*n*n + i * n + j].Color.w = 0.0f;	//black
+				mInstancedData[k * n * n + i * n + j].Color.x = 0.0f;	//red
+				mInstancedData[k * n * n + i * n + j].Color.y = 100.0f;	//yellow
+				mInstancedData[k * n * n + i * n + j].Color.z = 0.0f;	//blue
+				mInstancedData[k * n * n + i * n + j].Color.w = 0.0f;	//black
 			}
 		}
 	}
