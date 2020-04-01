@@ -491,10 +491,13 @@ void OptimMain::BuildGeometryBuffers()
 	ofn.lpstrInitialDir = NULL;
 	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 
-	/*UINT vcount = 1860;
-	UINT tcount = 1850;*/
-	UINT vcount = 4000;
-	UINT tcount = 4000;
+	UINT vcount = 1860;
+	UINT tcount = 1850;
+
+	UINT car_i = 0;
+	UINT i = 0;
+	UINT j = 0;
+
 	XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
 	XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
 
@@ -521,44 +524,40 @@ void OptimMain::BuildGeometryBuffers()
 			{
 				std::istringstream iss;
 				std::string skip;
-
-				iss >> skip >> vcount;
-				iss >> skip >> tcount;
-				iss >> skip >> skip >> skip >> skip;
-
-				for (UINT i = 0; i < vcount; ++i)
-				{
+				
+				if (car_i < 1860)
+				{	
+					iss.str(TextHandler);
 					iss >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
 					iss >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
-					
-					//vertices[i].Pos.x is  0 here!
-					std::wstringstream wtss(L"");
-					wtss << vertices[i].Pos.x<< "Finished in line" << __LINE__;
-					MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
+	
+
 
 					XMVECTOR P = DirectX::XMLoadFloat3(&vertices[i].Pos);
 
 					vMin = XMVectorMin(vMin, P);
 					vMax = XMVectorMax(vMax, P);
+					car_i++;
+					i++;
 				}
-
-				DirectX::XMStoreFloat3(&mSkullBox.Center, 0.5f * (vMin + vMax));
-				DirectX::XMStoreFloat3(&mSkullBox.Extents, 0.5f * (vMax - vMin));
-
-				iss >> skip;
-				iss >> skip;
-				iss >> skip;
-
-				mIndexCount = 3 * tcount;
-				
-				for (UINT i = 0; i < tcount; ++i)
-				{
-					iss >> indices[i * 3 + 0] >> indices[i * 3 + 1] >> indices[i * 3 + 2];
+				else {
+					//vertices[i].Pos.x is  0 here!
+					std::wstringstream wtss(L"");
+					wtss << vertices[i].Pos.x<< "Finished in line" << __LINE__;
+					MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
+					iss.str(TextHandler);
+					iss >> indices[j * 3 + 0] >> indices[j * 3 + 1] >> indices[j * 3 + 2];
+					j++;
+					car_i++;
 				}
 			} //end of while
 		SM_read.close();
+		DirectX::XMStoreFloat3(&mSkullBox.Center, 0.5f * (vMin + vMax));
+		DirectX::XMStoreFloat3(&mSkullBox.Extents, 0.5f * (vMax - vMin));
 		}
 	}
+	mIndexCount = 3 * tcount;
+
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage = D3D11_USAGE_IMMUTABLE;
 	vbd.ByteWidth = sizeof(Vertex::Basic32) * vcount;
