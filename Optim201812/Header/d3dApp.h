@@ -31,7 +31,7 @@ public:
 	virtual void DrawImgui() = 0;
 	virtual void UpdateScene(float dt) = 0;
 	virtual void DrawScene() = 0;
-
+ 
 	virtual void BuildGeometryBuffers() = 0;		//car geometry
 	virtual void StructureGeometryBuffers() = 0;
 	virtual void FdtGeometryBuffers() = 0;

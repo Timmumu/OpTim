@@ -161,7 +161,7 @@ int D3DApp::Run()
 				UpdateScene(mTimer.DeltaTime());
 				DrawImgui();		//virtual func in d3d, defined in OptimMain to pass some values
 				DrawScene();		//main plot
-			}
+ 			}
 			else
 			{
 				//使用函数Sleep来暂停线程的执行。

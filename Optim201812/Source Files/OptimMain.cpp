@@ -105,6 +105,9 @@ private:
 	ID3D11Buffer* mTargetIB = 0;
 	ID3D11Buffer* mInstancedBuffer = 0;			//for 动态缓冲
 
+	ID3D11Buffer* mCarVB = 0;
+	ID3D11Buffer* mCarIB = 0;
+
 	// Bounding box of the skull.
 	XNA::AxisAlignedBox mSkullBox;
 	XNA::Frustum mCamFrustum;
@@ -153,6 +156,7 @@ int WINAPI WinMain(HINSTANCE hInstance, HINSTANCE prevInstance, PSTR cmdLine, in
 OptimMain::OptimMain(HINSTANCE hInstance)
 	: D3DApp(hInstance),
 	mTargetVB(0), mTargetIB(0),
+	mCarVB(0), mCarIB(0),
 	mIndexCount(0), mInstancedBuffer(0),
 	mVisibleObjectCount(0), mFrustumCullingEnabled(true)
 {
@@ -195,7 +199,8 @@ OptimMain::~OptimMain()
 	ReleaseCom(mTargetVB);
 	ReleaseCom(mTargetIB);
 	ReleaseCom(mInstancedBuffer);
-
+	ReleaseCom(mCarVB);
+	ReleaseCom(mCarIB);
 
 	Effects::DestroyAll();
 	InputLayouts::DestroyAll();
@@ -392,6 +397,7 @@ void OptimMain::DrawScene()
 	//draw imgui things
 	ImGui_ImplDX11_RenderDrawData(ImGui::GetDrawData());
 
+	//main body
 	UINT stride[2] = { sizeof(Vertex::Basic32), sizeof(InstancedData) };
 	UINT offset[2] = { 0,0 };
 
@@ -475,7 +481,7 @@ void OptimMain::MouseMidUp(WPARAM btnState, int x, int y)
 	//
 }
 
-void OptimMain::BuildGeometryBuffers()
+void OptimMain::BuildGeometryBuffers()		//loading a car_1.txt
 {
 	OPENFILENAME ofn;
 	wchar_t FileNameTXT[250];
@@ -494,8 +500,7 @@ void OptimMain::BuildGeometryBuffers()
 	UINT vcount = 1860;
 	UINT tcount = 1850;
 
-	UINT car_i = 0;
-	UINT i = 0;
+ 	UINT i = 0;
 	UINT j = 0;
 
 	XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
@@ -503,12 +508,14 @@ void OptimMain::BuildGeometryBuffers()
 
 	XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
 	XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
+
 	std::vector<Vertex::Basic32> vertices(vcount);
+	mIndexCount = 3 * tcount;
 	std::vector<UINT> indices(mIndexCount);
 
 	if (!GetOpenFileName(&ofn))
 	{
-		MessageBox(0, L"Models/car.txt not found.", L"FBI WARNING", MB_OK);
+		MessageBox(0, L"Models/car_1.txt not found.", L"FBI WARNING", MB_OK);
 	}
 	else
 	{
@@ -516,7 +523,9 @@ void OptimMain::BuildGeometryBuffers()
 		std::ifstream SM_read(FileNameTXT);
 		if (!SM_read.is_open())
 		{
-			MessageBox(0, L"Import Models.txt Failed.", 0, 0);
+			std::wstringstream wtss(L"");
+			wtss << "Import Model file not opend, in line" << __LINE__;
+			MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
 		}
 		else
 		{
@@ -524,32 +533,24 @@ void OptimMain::BuildGeometryBuffers()
 			{
 				std::istringstream iss;
 				std::string skip;
-				
-				if (car_i < 1860)
+				iss.str(TextHandler);
+
+				if (i < 1860 && j< 1850 )
 				{	
-					iss.str(TextHandler);
 					iss >> vertices[i].Pos.x >> vertices[i].Pos.y >> vertices[i].Pos.z;
 					iss >> vertices[i].Normal.x >> vertices[i].Normal.y >> vertices[i].Normal.z;
 	
-
-
 					XMVECTOR P = DirectX::XMLoadFloat3(&vertices[i].Pos);
 
 					vMin = XMVectorMin(vMin, P);
 					vMax = XMVectorMax(vMax, P);
-					car_i++;
 					i++;
 				}
-				else {
-					//vertices[i].Pos.x is  0 here!
-					std::wstringstream wtss(L"");
-					wtss << vertices[i].Pos.x<< "Finished in line" << __LINE__;
-					MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
-					iss.str(TextHandler);
+				else if (i>=1860 && j <1850 )
+				{
 					iss >> indices[j * 3 + 0] >> indices[j * 3 + 1] >> indices[j * 3 + 2];
 					j++;
-					car_i++;
-				}
+ 				}
 			} //end of while
 		SM_read.close();
 		DirectX::XMStoreFloat3(&mSkullBox.Center, 0.5f * (vMin + vMax));
@@ -558,15 +559,15 @@ void OptimMain::BuildGeometryBuffers()
 	}
 	mIndexCount = 3 * tcount;
 
-	D3D11_BUFFER_DESC vbd;
-	vbd.Usage = D3D11_USAGE_IMMUTABLE;
-	vbd.ByteWidth = sizeof(Vertex::Basic32) * vcount;
-	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	vbd.CPUAccessFlags = 0;
-	vbd.MiscFlags = 0;
-	D3D11_SUBRESOURCE_DATA vinitData;
-	vinitData.pSysMem = &vertices[0];
-	ThrowIfFailed(md3dDevice->CreateBuffer(&vbd, &vinitData, &mTargetVB));
+	D3D11_BUFFER_DESC carbd;
+	carbd.Usage = D3D11_USAGE_IMMUTABLE;
+	carbd.ByteWidth = sizeof(Vertex::Basic32) * vcount;
+	carbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	carbd.CPUAccessFlags = 0;
+	carbd.MiscFlags = 0;
+	D3D11_SUBRESOURCE_DATA car_vinitData;
+	car_vinitData.pSysMem = &vertices[0];
+	ThrowIfFailed(md3dDevice->CreateBuffer(&carbd, &car_vinitData, &mCarVB));
 
 	// 
 	// Pack the indices of all the meshes into one index buffer.
@@ -579,7 +580,7 @@ void OptimMain::BuildGeometryBuffers()
 	ibd.MiscFlags = 0;
 	D3D11_SUBRESOURCE_DATA iinitData;
 	iinitData.pSysMem = &indices[0];
-	ThrowIfFailed(md3dDevice->CreateBuffer(&ibd, &iinitData, &mTargetIB));
+	ThrowIfFailed(md3dDevice->CreateBuffer(&ibd, &iinitData, &mCarIB));
 }
 
 void OptimMain::StructureGeometryBuffers()
@@ -1181,6 +1182,7 @@ void OptimMain::BuildInstancedBuffer()	//no need instanced for the moment
 	float dy = height / m;
 	float dz = depth / m;
 	for (int k = 0; k < n; ++k)
+	
 	{
 		for (int i = 0; i < n; ++i)
 		{
