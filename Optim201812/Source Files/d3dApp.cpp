@@ -47,26 +47,7 @@ INT_PTR CALLBACK About(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
 
 INT_PTR CALLBACK Import(HWND, UINT, WPARAM, LPARAM);
 
-// Message handler for DrawCar box.
-INT_PTR CALLBACK DrawCarBox(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	UNREFERENCED_PARAMETER(lParam);
-	switch (message)
-	{
-	case WM_INITDIALOG:
-		return (INT_PTR)TRUE;
-
-	case WM_COMMAND:
-		if (LOWORD(wParam) == IDOK || LOWORD(wParam) == IDCANCEL)
-		{
-			EndDialog(hDlg, LOWORD(wParam));
-			return (INT_PTR)TRUE;
-		}
-		break;
-	}
-	return (INT_PTR)FALSE;
-}
-
+ 
 
 // Message handler for ImportE2k box.
 INT_PTR CALLBACK ImportE2kBox(HWND hDlg, UINT message, WPARAM wParam, LPARAM lParam)
@@ -109,7 +90,7 @@ D3DApp::D3DApp(HINSTANCE hInstance)
 	mDepthStencilBuffer(0),
 	mRenderTargetView(0),
 	mDepthStencilView(0)
-{	
+{
 	//md3dDevice = 0???
 	DebuggerMarker = L"DebuggerMarker is 1";
 
@@ -122,10 +103,10 @@ D3DApp::D3DApp(HINSTANCE hInstance)
 }
 
 D3DApp::~D3DApp()
-{	
+{
 	//destructor, remember to destroy created class
 	//if (mRenderTargetView) mRenderTargetView->Release();
-	DestroyWindow(mhMainWnd);	
+	DestroyWindow(mhMainWnd);
 	ReleaseCom(mRenderTargetView);
 	ReleaseCom(mDepthStencilView);
 	ReleaseCom(mSwapChain);
@@ -156,7 +137,7 @@ float D3DApp::AspectRatio()const
 
 //Main Loop
 int D3DApp::Run()
-{	
+{
 	MSG msg = { 0 };
 	mTimer.Reset();
 
@@ -172,17 +153,17 @@ int D3DApp::Run()
 		}
 		// Otherwise, do animation/game stuff.
 		else
-		{	
+		{
 			mTimer.Tick();
 			if (!mAppPaused)
 			{
 				CalculateFrameStats();
 				UpdateScene(mTimer.DeltaTime());
-				DrawImgui();		//virtual func in d3d, defined in OptimMain
-				DrawScene();
-			}
+				DrawImgui();		//virtual func in d3d, defined in OptimMain to pass some values
+				DrawScene();		//main plot
+ 			}
 			else
-			{	
+			{
 				//使用函数Sleep来暂停线程的执行。
 				Sleep(100);
 			}
@@ -194,10 +175,10 @@ int D3DApp::Run()
 
 bool D3DApp::Init()
 {
-	
+
 	if (!InitMainWindow())	return false;
-	
-	if (!InitDirect3D())	
+
+	if (!InitDirect3D())
 	{
 		OutputDebugStringW(L" InitDirect3D() in d3dApp.cpp failed.");
 		return false;
@@ -232,10 +213,10 @@ void D3DApp::OnResize()
 	ThrowIfFailed(md3dDevice->CreateRenderTargetView(backBuffer, 0, &mRenderTargetView));
 
 	ReleaseCom(backBuffer);
-	  
+
 	// Create the depth/stencil buffer and view.
 	D3D11_TEXTURE2D_DESC depthStencilDesc;
-	depthStencilDesc.Width = mClientWidth ;
+	depthStencilDesc.Width = mClientWidth;
 	depthStencilDesc.Height = mClientHeight;
 	depthStencilDesc.MipLevels = 1;
 	depthStencilDesc.ArraySize = 1;
@@ -259,8 +240,8 @@ void D3DApp::OnResize()
 	depthStencilDesc.CPUAccessFlags = 0;
 	depthStencilDesc.MiscFlags = 0;
 
-	ThrowIfFailed(md3dDevice->CreateTexture2D(&depthStencilDesc, 0, &mDepthStencilBuffer));	
-	
+	ThrowIfFailed(md3dDevice->CreateTexture2D(&depthStencilDesc, 0, &mDepthStencilBuffer));
+
 	// Create the depth stencil view
 /*
 	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
@@ -289,7 +270,201 @@ extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT mes
 
 LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
-	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))
+	//if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))	//plotted imgui's UI not function inside childWindow
+	//	return true;
+	 
+	switch (message)
+	{
+	// WM_ACTIVATE is sent when the window is activated or deactivated.  
+	//Pause the app when the window is deactivated and unpause it 	 
+	case WM_ACTIVATE:		
+		if (LOWORD(wParam) == WA_INACTIVE)	
+		{
+			mAppPaused = true;
+			mTimer.Stop();
+		}
+		else								// when it becomes active.
+		{
+			mAppPaused = false;
+			mTimer.Start();
+		}
+		return 0;
+
+		// WM_SIZE is sent when the user resizes the window.  
+	case WM_SIZE:
+		// Save the fresh client area dimensions.
+		mClientWidth = LOWORD(lParam);
+		mClientHeight = HIWORD(lParam);
+		if (md3dDevice)
+		{
+			if (wParam == SIZE_MINIMIZED)
+			{
+				mAppPaused = true;
+				mMinimized = true;
+				mMaximized = false;
+			}
+			else if (wParam == SIZE_MAXIMIZED)
+			{
+				mAppPaused = false;
+				mMinimized = false;
+				mMaximized = true;
+				OnResize();
+			}
+			else if (wParam == SIZE_RESTORED)
+			{
+				// Restoring from minimized state?
+				if (mMinimized)
+				{
+					mAppPaused = false;
+					mMinimized = false;
+					OnResize();
+				}
+
+				// Restoring from maximized state?
+				else if (mMaximized)
+				{
+					mAppPaused = false;
+					mMaximized = false;
+					OnResize();
+				}
+				else if (mResizing)
+				{
+					// If user is dragging the resize bars, we do not resize 
+					// the buffers here because as the user continuously 
+					// drags the resize bars, a stream of WM_SIZE messages are
+					// sent to the window, and it would be pointless (and slow)
+					// to resize for each WM_SIZE message received from dragging
+					// the resize bars.  So instead, we reset after the user is 
+					// done resizing the window and releases the resize bars, which 
+					// sends a WM_EXITSIZEMOVE message.
+				}
+				else // API call such as SetWindowPos or mSwapChain->SetFullscreenState.
+				{
+					OnResize();
+				}
+			}
+		}
+		return 0;	 //end of WM_Size
+
+	// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
+	case WM_ENTERSIZEMOVE:
+		mAppPaused = true;
+		mResizing = true;
+		mTimer.Stop();
+		return 0;
+
+		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
+		// Here we reset everything based on the fresh window dimensions.
+	case WM_EXITSIZEMOVE:
+		mAppPaused = false;
+		mResizing = false;
+		mTimer.Start();
+		OnResize();
+		return 0;
+
+		// Catch this message so to prevent the window from becoming too small.
+	case WM_GETMINMAXINFO:
+		((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
+		((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200;
+		return 0;
+
+	case WM_LBUTTONDOWN:
+		//MessageBox(0, L"WM_LBUTTONDOWN Clicked", L"FBI WARNING", MB_OK);
+	case WM_LBUTTONUP:
+
+	case WM_MBUTTONDOWN:
+		MouseMidDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		return 0;
+	case WM_MBUTTONUP:
+		MouseMidUp(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		return 0;
+
+	case WM_RBUTTONDOWN:
+		OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		return 0;
+	case WM_RBUTTONUP:
+		OnMouseUp(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		return 0;
+
+	case WM_MOUSEMOVE:
+		OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
+		return 0;
+
+	case WM_MOUSEWHEEL:
+		if ((short)GET_WHEEL_DELTA_WPARAM(wParam) > 0)
+		{
+			MouseWheelUp = true;
+		}
+		if ((short)GET_WHEEL_DELTA_WPARAM(wParam) < 0)
+		{
+			MouseWheelDown = true;
+		}
+
+	case WM_COMMAND:
+	{
+		int wmId = LOWORD(wParam);
+		// Parse the menu selections:
+		switch (wmId)
+		{
+		case IDM_ABOUT:
+			DialogBox(mhAppInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+			break;
+
+		case IDM_DrawCar:
+  			break;
+
+		case IDM_ImportE2k:
+			StructureGeometryBuffers();
+			break;
+
+		case IDM_ImportDLLL:
+			ImportDLLL();
+			break;
+
+		case IDM_ImportDLLL_Test:
+			ImportDLLLTest();
+			break;
+
+		case IDM_ImportWL:
+			break;
+
+		case IDM_ImportSF:
+			FdtGeometryBuffers();
+			break;
+
+		case IDM_ImportE2k_Test:
+			//DialogBox(mhAppInst, MAKEINTRESOURCE(IDD_ImportE2kBox), hWnd, ImportE2kBox);
+			break;
+
+		case IDM_EXIT:
+			DestroyWindow(hWnd);
+			break;
+		}
+	}
+
+	case WM_PAINT:
+		/*hdc = BeginPaint(hWnd, &ps);		//childwindow's paint is not reuqired
+		EndPaint(hWnd, &ps);*/
+		break;
+
+	case WM_SYSCOMMAND:
+		if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
+			return 0;
+		break;
+
+	case WM_DESTROY:
+		PostQuitMessage(0);
+		return 0;
+	}
+	return DefWindowProc(hWnd, message, wParam, lParam);	//default case
+}
+
+LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+	PAINTSTRUCT ps;
+	HDC hdc;
+
+	if (ImGui_ImplWin32_WndProcHandler(hWnd, message, wParam, lParam))		//plotted imgui's UI only function inside Parent Window
 		return true;
 
 	switch (message)
@@ -367,7 +542,6 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 		}
 		return 0;//end of WM_Size
 
-
 		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
 	case WM_ENTERSIZEMOVE:
 		mAppPaused = true;
@@ -411,7 +585,6 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 	case WM_MOUSEMOVE:
 		OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
 		return 0;
-
 
 	case WM_MOUSEWHEEL:
 		if ((short)GET_WHEEL_DELTA_WPARAM(wParam) > 0)
@@ -435,209 +608,14 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 			break;
 
 		case IDM_DrawCar:
+		{
 			BuildGeometryBuffers();
-			DialogBox(mhAppInst, MAKEINTRESOURCE(IDD_DrawCarBox), hWnd, DrawCarBox);
-			break;
 
-		case IDM_ImportE2k:
-			StructureGeometryBuffers();
-			break;
-
-		case IDM_ImportDLLL:
-			ImportDLLL();
-			break;
-
-		case IDM_ImportDLLL_Test:
-			ImportDLLLTest();
-			break;
-
-		case IDM_ImportWL:
-			break;
-
-		case IDM_ImportSF:
-			FdtGeometryBuffers();
-			break;
-
-		case IDM_ImportE2k_Test:
-			//DialogBox(mhAppInst, MAKEINTRESOURCE(IDD_ImportE2kBox), hWnd, ImportE2kBox);
-			break;
-
-		case IDM_EXIT:
-			DestroyWindow(hWnd);
+			std::wstringstream wtss(L"");
+			wtss << "DrawCar Finished in line" << __LINE__;
+			MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
 			break;
 		}
-	}
-
-	case WM_PAINT:
-		/*hdc = BeginPaint(hWnd, &ps);		//childwindow's paint is not reuqired
-		EndPaint(hWnd, &ps);*/
-		break;
-
-	case WM_SYSCOMMAND:
-		if ((wParam & 0xfff0) == SC_KEYMENU) // Disable ALT application menu
-			return 0;
-		break;
-
-	case WM_DESTROY:
-		PostQuitMessage(0);
-		return 0;
-
-	default:
-		return DefWindowProc(hWnd, message, wParam, lParam);
-	}
-	return DefWindowProc(hWnd, message, wParam, lParam); 
-}
-
-LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
-{
-	PAINTSTRUCT ps;
-	HDC hdc;
-
-	switch (message)
-	{
-		// WM_ACTIVATE is sent when the window is activated or deactivated.  
-		// We pause the game when the window is deactivated and unpause it 
-		// when it becomes active.  
-	case WM_ACTIVATE:
-		if (LOWORD(wParam) == WA_INACTIVE)
-		{
-			mAppPaused = true;
-			mTimer.Stop();
-		}
-		else
-		{
-			mAppPaused = false;
-			mTimer.Start();
-		}
-		return 0;
-
-		// WM_SIZE is sent when the user resizes the window.  
-	case WM_SIZE:
-		// Save the fresh client area dimensions.
-		mClientWidth = LOWORD(lParam);
-		mClientHeight = HIWORD(lParam);
-		if (md3dDevice)
-		{
-			if (wParam == SIZE_MINIMIZED)
-			{
-				mAppPaused = true;
-				mMinimized = true;
-				mMaximized = false;
-			}
-			else if (wParam == SIZE_MAXIMIZED)
-			{
-				mAppPaused = false;
-				mMinimized = false;
-				mMaximized = true;
-				OnResize();
-			}
-			else if (wParam == SIZE_RESTORED)
-			{
-
-				// Restoring from minimized state?
-				if (mMinimized)
-				{
-					mAppPaused = false;
-					mMinimized = false;
-					OnResize();
-				}
-
-				// Restoring from maximized state?
-				else if (mMaximized)
-				{
-					mAppPaused = false;
-					mMaximized = false;
-					OnResize();
-				}
-				else if (mResizing)
-				{
-					// If user is dragging the resize bars, we do not resize 
-					// the buffers here because as the user continuously 
-					// drags the resize bars, a stream of WM_SIZE messages are
-					// sent to the window, and it would be pointless (and slow)
-					// to resize for each WM_SIZE message received from dragging
-					// the resize bars.  So instead, we reset after the user is 
-					// done resizing the window and releases the resize bars, which 
-					// sends a WM_EXITSIZEMOVE message.
-				}
-				else // API call such as SetWindowPos or mSwapChain->SetFullscreenState.
-				{
-					OnResize();
-				}
-			}
-		}
-		return 0;//end of WM_Size
-
-		// WM_EXITSIZEMOVE is sent when the user grabs the resize bars.
-	case WM_ENTERSIZEMOVE:
-		mAppPaused = true;
-		mResizing = true;
-		mTimer.Stop();
-		return 0;
-
-		// WM_EXITSIZEMOVE is sent when the user releases the resize bars.
-		// Here we reset everything based on the fresh window dimensions.
-	case WM_EXITSIZEMOVE:
-		mAppPaused = false;
-		mResizing = false;
-		mTimer.Start();
-		OnResize();
-		return 0;
-
-		// Catch this message so to prevent the window from becoming too small.
-	case WM_GETMINMAXINFO:
-		((MINMAXINFO*)lParam)->ptMinTrackSize.x = 200;
-		((MINMAXINFO*)lParam)->ptMinTrackSize.y = 200;
-		return 0;
-
-	case WM_LBUTTONDOWN:
-		//MessageBox(0, L"WM_LBUTTONDOWN Clicked", L"FBI WARNING", MB_OK);
-	case WM_LBUTTONUP:
-
-	case WM_MBUTTONDOWN:
-		MouseMidDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		return 0;
-	case WM_MBUTTONUP:
-		MouseMidUp(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		return 0;
-
-	case WM_RBUTTONDOWN:
-		OnMouseDown(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		return 0;
-	case WM_RBUTTONUP:
-		OnMouseUp(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		return 0;
-	
-	case WM_MOUSEMOVE:
-		OnMouseMove(wParam, GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam));
-		return 0;
-
-	case WM_MOUSEWHEEL:
-		if ((short)GET_WHEEL_DELTA_WPARAM(wParam) > 0)
-		{ 
-			MouseWheelUp = true;
-		}
-		if ((short)GET_WHEEL_DELTA_WPARAM(wParam) < 0)
-		{
-			MouseWheelDown = true;
-		}
-
-	
-	case WM_COMMAND:
-		{	
-		int wmId = LOWORD(wParam);
-		// Parse the menu selections:
-		switch (wmId)
-		{
-		case IDM_ABOUT:
-			DialogBox(mhAppInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);			
-			break;
-
-		case IDM_DrawCar:
-			BuildGeometryBuffers();
-			DialogBox(mhAppInst, MAKEINTRESOURCE(IDD_DrawCarBox), hWnd, DrawCarBox);			
-			break;
-		
 		case IDM_ImportE2k:
 			StructureGeometryBuffers();
 			break;
@@ -666,7 +644,7 @@ LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		}
 	}
-	
+
 	case WM_PAINT:
 		hdc = BeginPaint(hWnd, &ps);	//this paint is essential for whole project
 		EndPaint(hWnd, &ps);
@@ -683,7 +661,7 @@ LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 }
 
 bool D3DApp::InitMainWindow()
-{	
+{
 	// Register class
 	WNDCLASSEX wcex;
 	wcex.cbSize = sizeof(WNDCLASSEX);
@@ -696,7 +674,7 @@ bool D3DApp::InitMainWindow()
 	wcex.hIcon = LoadIcon(mhAppInst, MAKEINTRESOURCE(IDI_HAMMER));
 	wcex.hCursor = LoadCursor(0, IDC_ARROW);
 	//wcex.hbrBackground = (HBRUSH)(COLOR_WINDOW + 1);
-	wcex.hbrBackground =(HBRUSH)(CreateSolidBrush(RGB(255, 255, 255)));
+	wcex.hbrBackground = (HBRUSH)(CreateSolidBrush(RGB(255, 255, 255)));
 	wcex.lpszMenuName = MAKEINTRESOURCEW(IDC_OPTIMV101);
 	wcex.lpszClassName = L"D3DWndClassName";
 	if (!RegisterClassEx(&wcex))
@@ -710,11 +688,11 @@ bool D3DApp::InitMainWindow()
 	int width = R.right - R.left;
 	int height = R.bottom - R.top;
 
-	mhMainWnd = CreateWindow(L"D3DWndClassName", 
-							mMainWndCaption.c_str(),
-							WS_OVERLAPPEDWINDOW, 
-							CW_USEDEFAULT, CW_USEDEFAULT, 
-							width, height, 0, 0, mhAppInst, this);
+	mhMainWnd = CreateWindow(L"D3DWndClassName",
+		mMainWndCaption.c_str(),
+		WS_OVERLAPPEDWINDOW,
+		CW_USEDEFAULT, CW_USEDEFAULT,
+		width, height, 0, 0, mhAppInst, this);
 	if (!mhMainWnd)
 	{
 		MessageBox(0, L"CreateWindow Failed.", 0, 0);
@@ -722,7 +700,7 @@ bool D3DApp::InitMainWindow()
 	}
 	::ShowWindow(mhMainWnd, SW_SHOW);
 	::UpdateWindow(mhMainWnd);
- 
+
 	//Create Child Winodw for rendering the figures
 	WNDCLASSEX wcexChild;
 	wcexChild.cbSize = sizeof(WNDCLASSEX);
@@ -747,23 +725,23 @@ bool D3DApp::InitMainWindow()
 		return false;
 	}
 	// Compute window rectangle dimensions based on requested client area dimensions.
-	RECT Rchild = { 100, 100, mClientWidth-100, mClientHeight };			//L, T, R, B
+	RECT Rchild = { 100, 100, mClientWidth - 100, mClientHeight };			//L, T, R, B
 	AdjustWindowRect(&Rchild, WS_OVERLAPPEDWINDOW, false);
 	int widthChild = Rchild.right - Rchild.left;
 	int heightChild = Rchild.bottom - Rchild.top;
 
-	DirectHwnd = CreateWindow(L"D3DWndClassName",    
+	DirectHwnd = CreateWindow(L"D3DWndClassName",
 		mMainWndCaption.c_str(),
 		WS_CHILD | WS_VISIBLE | WS_CAPTION
 		| WS_SYSMENU | WS_THICKFRAME
 		| WS_MINIMIZEBOX | WS_MAXIMIZEBOX | WS_OVERLAPPEDWINDOW,
-		CW_USEDEFAULT, 
+		CW_USEDEFAULT,
 		CW_USEDEFAULT,
 		widthChild, heightChild, mhMainWnd, 0, mhAppInst, 0);
 
 	if (!DirectHwnd)
 	{
- 		std::wstringstream wtss(L"");
+		std::wstringstream wtss(L"");
 		wtss << "CreateChildWindow Failed in line" << __LINE__;		// << " in file " << __FILE__;
 		MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
 		return false;
@@ -775,12 +753,12 @@ bool D3DApp::InitMainWindow()
 }
 
 bool D3DApp::InitDirect3D()
-{	
+{
 	// Create the device and device context.
 	UINT createDeviceFlags = 0;
-	#if defined(DEBUG) || defined(_DEBUG)  
-		createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
-	#endif
+#if defined(DEBUG) || defined(_DEBUG)  
+	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+#endif
 
 	D3D_FEATURE_LEVEL featureLevel;
 	HRESULT hr = D3D11CreateDevice(
@@ -799,7 +777,7 @@ bool D3DApp::InitDirect3D()
 	OutputDebugStringW(DebuggerMarker);*/
 
 	if (FAILED(hr))
-	{		 
+	{
 		std::wstringstream wtss(L"");
 		wtss << "Optim: D3D11CreateDevice Failed in line" << __LINE__;		// << " in file " << __FILE__;
 		MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
@@ -813,10 +791,10 @@ bool D3DApp::InitDirect3D()
 		MessageBox(NULL, wtss.str().c_str(), L"FBI WARNING", MB_OK);
 		return false;
 	}
-	 
+
 	// Check 4X MSAA quality support for our back buffer format.
 	ThrowIfFailed(md3dDevice->CheckMultisampleQualityLevels(DXGI_FORMAT_R8G8B8A8_UNORM, 4, &m4xMsaaQuality));
-	assert(m4xMsaaQuality > 0);	
+	assert(m4xMsaaQuality > 0);
 
 	// Fill out a DXGI_SWAP_CHAIN_DESC to describe our swap chain.
 	DXGI_SWAP_CHAIN_DESC sd;
@@ -857,13 +835,13 @@ bool D3DApp::InitDirect3D()
 	// This function is being called with a device from a different IDXGIFactory."
 
 	IDXGIDevice* dxgiDevice = 0;
-	ThrowIfFailed( md3dDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)&dxgiDevice));
+	ThrowIfFailed(md3dDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)& dxgiDevice));
 
 	IDXGIAdapter* dxgiAdapter = 0;
-	ThrowIfFailed(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)&dxgiAdapter));
+	ThrowIfFailed(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)& dxgiAdapter));
 
 	IDXGIFactory* dxgiFactory = 0;
-	ThrowIfFailed(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)&dxgiFactory));
+	ThrowIfFailed(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)& dxgiFactory));
 
 	ThrowIfFailed(dxgiFactory->CreateSwapChain(md3dDevice, &sd, &mSwapChain));
 
@@ -876,13 +854,13 @@ bool D3DApp::InitDirect3D()
 	// just call the OnResize method here to avoid code duplication.
 
 	//bind the ImGui with the d3d
- 
+
 	OnResize();
 
 	DebuggerMarker = L"DebuggerMarker is 3";
 	OutputDebugStringW(DebuggerMarker);
 
-	return true;	
+	return true;
 }
 
 
@@ -900,7 +878,7 @@ bool D3DApp::InitImgui()
 	//ImGui::StyleColorsClassic();
 
 	// Setup Platform/Renderer bindings
-	ImGui_ImplWin32_Init(DirectHwnd);		
+	ImGui_ImplWin32_Init(DirectHwnd);
 	ImGui_ImplDX11_Init(md3dDevice, md3dImmediateContext);
 	return true;
 }
@@ -939,7 +917,7 @@ void D3DApp::CalculateFrameStats()
 // Clean up the objects we've created
 //--------------------------------------------------------------------------------------
 void D3DApp::CleanupDevice()
-{	
+{
 	if (md3dImmediateContext) md3dImmediateContext->ClearState();
 	if (md3dDevice) md3dDevice->Release();
 	if (md3dImmediateContext) md3dImmediateContext->Release();

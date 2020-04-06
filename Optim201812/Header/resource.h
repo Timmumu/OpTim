@@ -24,8 +24,7 @@ ID = An unknown or custom resource
 #define IDD_ABOUTBOX            103
 
 #define IDM_DrawCar             106
-#define IDD_DrawCarBox	        1061
-
+ 
 #define IDM_ImportE2k				206
 #define IDM_ImportDLLL				207
 #define IDM_ImportWL				208
