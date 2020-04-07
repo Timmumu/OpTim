@@ -429,7 +429,16 @@ void OptimMain::DrawScene()
 		Effects::InstancedBasicFX->SetMaterial(mSkullMat);
 
 		activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
-		md3dImmediateContext->DrawIndexedInstanced(mIndexCount, mVisibleObjectCount, 0, 0, 0);
+
+		//used for render each story
+ 		md3dImmediateContext->DrawIndexedInstanced(mIndexCount, mVisibleObjectCount, 0, 0, 0);
+		/*void DrawIndexedInstanced(
+			UINT IndexCountPerInstance,	*Number of indices read from the index buffer for each instance.
+			UINT InstanceCount,			*Number of instances to draw
+			UINT StartIndexLocation,	*The location of the first index read by the GPU from the index buffer.
+			INT  BaseVertexLocation,	*A value added to each index before reading a vertex from the vertex buffer.
+			UINT StartInstanceLocation) *A value added to each index before reading per-instance data from a vertex buffer.
+		*/
 	}
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 
@@ -557,7 +566,7 @@ void OptimMain::BuildGeometryBuffers()		//loading a car_1.txt
 		DirectX::XMStoreFloat3(&mSkullBox.Extents, 0.5f * (vMax - vMin));
 		}
 	}
-	mIndexCount = 3 * tcount;
+	mIndexCount = 3 * tcount;		//duplicated!
 
 	D3D11_BUFFER_DESC carbd;
 	carbd.Usage = D3D11_USAGE_IMMUTABLE;

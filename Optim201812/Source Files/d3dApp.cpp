@@ -99,6 +99,8 @@ D3DApp::D3DApp(HINSTANCE hInstance)
 	// Get a pointer to the application object so we can forward 
 	// Windows messages to the object's window procedure through
 	// the global window procedure.
+	// 让一个全局指针获取这个类，这样我们就可以在Windows消息处理的回调函数
+	// 让这个类调用内部的回调函数了
 	gd3dApp = this;
 }
 
@@ -411,7 +413,7 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
 			break;
 
 		case IDM_DrawCar:
-  			break;
+   			break;
 
 		case IDM_ImportE2k:
 			StructureGeometryBuffers();
