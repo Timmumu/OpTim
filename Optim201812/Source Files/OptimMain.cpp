@@ -92,13 +92,16 @@ private:
 	void BuildGeometryBuffers();
 	void BuildInstancedBuffer();
 
-	void StructureGeometryBuffers();
+	void ImportE2k();
 	void FdtGeometryBuffers();
 
 	void ImportDLLL();
 	void ImportDLLLTest();
 
 	void ImportDLLL_MMAP();
+
+	void PlanView();
+	void ThreeDimView();
 
 private:
 	ID3D11Buffer* mTargetVB = 0;
@@ -345,6 +348,7 @@ void OptimMain::DrawImgui()
 		ImGui_ImplWin32_NewFrame();
 		ImGui::NewFrame();
 	}
+
 	// 1. Show the big demo window (Most of the sample code is in ImGui::ShowDemoWindow()! You can browse its code to learn more about Dear ImGui!).
 	if (show_demo_window)
 		ImGui::ShowDemoWindow(&show_demo_window);
@@ -381,6 +385,44 @@ void OptimMain::DrawImgui()
 			mCam.UpDown(10.0f * 1);								//edit the unit 1 for further operation
 		}
 		ImGui::End();
+	}
+
+	// 4. Show OpTim Quick Access Window
+	{
+		ImGui::Begin("Quick Access Toolkit");                            
+		ImGui::Text("View");
+		if (ImGui::Button("Plan"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+		{
+			PlanViewClicked++;
+			PlanView();
+		}
+		ImGui::SameLine();
+		ImGui::Text("PlanViewClicked = %d", PlanViewClicked);
+		if (ImGui::Button("3D"))                            // Buttons return true when clicked (most widgets return true when edited/activated)
+		{
+			ThreeDimView();
+		}
+
+		ImGui::Text("Frame");
+		if (ImGui::Button("Column"))                            
+		{
+			//ShowFrame();
+		}
+		if (ImGui::Button("Beam"))
+		{
+			//ShowFrame();
+		}
+		ImGui::Text("Area");
+		if (ImGui::Button("Wall"))
+		{
+			//ShowFrame();
+		}
+		if (ImGui::Button("Slab"))
+		{
+			//ShowFrame();
+		}
+
+ 		ImGui::End();
 	}
 
 	// Rendering
@@ -490,6 +532,7 @@ void OptimMain::MouseMidUp(WPARAM btnState, int x, int y)
 	//
 }
 
+//useless, just abandon it
 void OptimMain::BuildGeometryBuffers()		//loading a car_1.txt
 {
 	OPENFILENAME ofn;
@@ -566,17 +609,16 @@ void OptimMain::BuildGeometryBuffers()		//loading a car_1.txt
 		DirectX::XMStoreFloat3(&mSkullBox.Extents, 0.5f * (vMax - vMin));
 		}
 	}
-	mIndexCount = 3 * tcount;		//duplicated!
 
-	D3D11_BUFFER_DESC carbd;
-	carbd.Usage = D3D11_USAGE_IMMUTABLE;
-	carbd.ByteWidth = sizeof(Vertex::Basic32) * vcount;
-	carbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
-	carbd.CPUAccessFlags = 0;
-	carbd.MiscFlags = 0;
-	D3D11_SUBRESOURCE_DATA car_vinitData;
-	car_vinitData.pSysMem = &vertices[0];
-	ThrowIfFailed(md3dDevice->CreateBuffer(&carbd, &car_vinitData, &mCarVB));
+	D3D11_BUFFER_DESC vbd;
+	vbd.Usage = D3D11_USAGE_IMMUTABLE;
+	vbd.ByteWidth = sizeof(Vertex::Basic32) * vcount;
+	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+	vbd.CPUAccessFlags = 0;
+	vbd.MiscFlags = 0;
+	D3D11_SUBRESOURCE_DATA vinitData;
+	vinitData.pSysMem = &vertices[0];
+	ThrowIfFailed(md3dDevice->CreateBuffer(&vbd, &vinitData, &mTargetVB));
 
 	// 
 	// Pack the indices of all the meshes into one index buffer.
@@ -589,15 +631,23 @@ void OptimMain::BuildGeometryBuffers()		//loading a car_1.txt
 	ibd.MiscFlags = 0;
 	D3D11_SUBRESOURCE_DATA iinitData;
 	iinitData.pSysMem = &indices[0];
-	ThrowIfFailed(md3dDevice->CreateBuffer(&ibd, &iinitData, &mCarIB));
+	ThrowIfFailed(md3dDevice->CreateBuffer(&ibd, &iinitData, &mTargetIB));
 }
 
-void OptimMain::StructureGeometryBuffers()
+void OptimMain::ThreeDimView()	//recover to 3D
 {
-	//for debugging
-	int ImportDLLLfread_Start = clock();
-	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
-	std::ofstream fout("Models/Etabs_copy.txt");
+
+}
+
+void OptimMain::PlanView()		// plan view
+{
+
+}
+
+
+void OptimMain::ImportE2k()			//e2k Etabs version 9.6
+{
+	bool NeedFout = true;
 
 	UINT vcount = 0;
 	UINT lcount = 0;
@@ -609,8 +659,9 @@ void OptimMain::StructureGeometryBuffers()
 	UINT LineAss_Count = 0;
 	UINT MP_Count = 0;
 
-	std::deque<Story> story;
+	std::deque<Story> story;					//a revisable container
 	std::deque<MaterialProp> materialprop;
+
 	std::deque<PointCoord> pointcoord;
 	std::vector <std::vector<Point3D>> point3d;
 
@@ -837,59 +888,54 @@ void OptimMain::StructureGeometryBuffers()
 		indices[i * 2 + 1] = linedirectx[i].LineEIndex;
 	}
 
+	if (NeedFout = true)
+	{	
+		std::ofstream fout("Models/Etabs_copy.txt");
 
-	fout << '\n' << "Materials" << endl;
-	for (UINT i = 0; i < materialprop.size(); ++i)
-	{
-		fout << materialprop[i].Name << " " << materialprop[i].Mass << " "
-			<< materialprop[i].Weight << " " << materialprop[i].ModulusE << " "
-			<< materialprop[i].PossionR << std::endl;
-	}
-
-	fout << '\n' << "Story: NOS = " << story.size() << endl;
-	for (UINT i = 0; i < story.size(); ++i)
-	{
-		fout << story[i].StoryName << " Height " << story[i].StoryHeight
-			<< " mPD = " << story[i].TotalHeight << endl;
-	}
-
-	fout << '\n' << "Points Coordinates: " << pointcoord.size() << endl;
-	for (UINT i = 0; i < story.size(); i++)
-	{
-		for (UINT j = 0; j < pointcoord.size(); j++)
+		fout << '\n' << "Materials" << endl;
+		for (UINT i = 0; i < materialprop.size(); ++i)
 		{
-			fout << " PtName: " << point3d[i][j].PtName
-				<< " @ Floor: " << story[i].StoryName
-				<< " X: " << point3d[i][j].PtX
-				<< " Y: " << point3d[i][j].PtY
-				<< " Z: " << point3d[i][j].PtZ << endl;
+			fout << materialprop[i].Name << " " << materialprop[i].Mass << " "
+				<< materialprop[i].Weight << " " << materialprop[i].ModulusE << " "
+				<< materialprop[i].PossionR << std::endl;
 		}
+
+		fout << '\n' << "Story: NOS = " << story.size() << endl;
+		for (UINT i = 0; i < story.size(); ++i)
+		{
+			fout << story[i].StoryName << " Height " << story[i].StoryHeight
+				<< " mPD = " << story[i].TotalHeight << endl;
+		}
+
+		fout << '\n' << "Points Coordinates: " << pointcoord.size() << endl;
+		for (UINT i = 0; i < story.size(); i++)
+		{
+			for (UINT j = 0; j < pointcoord.size(); j++)
+			{
+				fout << " PtName: " << point3d[i][j].PtName
+					<< " @ Floor: " << story[i].StoryName
+					<< " X: " << point3d[i][j].PtX
+					<< " Y: " << point3d[i][j].PtY
+					<< " Z: " << point3d[i][j].PtZ << endl;
+			}
+		}
+
+		fout << '\n' << "LINE Connectivity: NOS = " << Line_Count << endl;
+		for (UINT i = 0; i < lcount; ++i)
+		{
+			fout << linedirectx[i].LineName << " @ Floor " << linedirectx[i].Story << endl;
+			fout << linedirectx[i].LineStart << " LineSIndex = " << linedirectx[i].LineSIndex << endl;
+			fout << linedirectx[i].LineEnd << " LineEIndex = " << linedirectx[i].LineEIndex << endl;
+		}
+
+		fout << '\n' << "LINE Assignment: NOS = " << lineassign.size() << endl;
+		for (UINT i = 0; i < lineassign.size(); ++i)
+		{
+			fout << lineassign[i].LineName << " " << lineassign[i].LineStart << " " << lineassign[i].LineEnd << " " << lineassign[i].Story << endl;
+		}
+
+		fout.close();
 	}
-
-	fout << '\n' << "LINE Connectivity: NOS = " << Line_Count << endl;
-	for (UINT i = 0; i < lcount; ++i)
-	{
-		fout << linedirectx[i].LineName << " @ Floor " << linedirectx[i].Story << endl;
-		fout << linedirectx[i].LineStart << " LineSIndex = " << linedirectx[i].LineSIndex << endl;
-		fout << linedirectx[i].LineEnd << " LineEIndex = " << linedirectx[i].LineEIndex << endl;
-	}
-
-	fout << '\n' << "LINE Assignment: NOS = " << lineassign.size() << endl;
-	for (UINT i = 0; i < lineassign.size(); ++i)
-	{
-		fout << lineassign[i].LineName << " " << lineassign[i].LineStart << " " << lineassign[i].LineEnd << " " << lineassign[i].Story << endl;
-	}
-
-	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
-	__int64 time_sec = (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count()); //can use chrono::microseconds>
-	fout << "Time elapsed = " << time_sec / 1000 << " s " << std::endl;
-	fout.close();
-
-	//performance testing
-	float ImportDLLLfread_Elapsed = (float(clock() - ImportDLLLfread_Start) / CLOCKS_PER_SEC);
-	std::wstringstream wtss(L"");
-	wtss << "Loading Read & Write Done in " << ImportDLLLfread_Elapsed << " s ";
-	MessageBox(NULL, wtss.str().c_str(), L"MsgBox", MB_OK);
 
 	D3D11_BUFFER_DESC vbd;
 	vbd.Usage = D3D11_USAGE_IMMUTABLE;
@@ -914,6 +960,330 @@ void OptimMain::StructureGeometryBuffers()
 	iinitData.pSysMem = &indices[0];
 	ThrowIfFailed(md3dDevice->CreateBuffer(&ibd, &iinitData, &mTargetIB));
 }
+
+
+//void OptimMain::ImportE2k()			//e2k Etabs version 9.6
+//{
+//	//for debugging
+//	int ImportDLLLfread_Start = clock();
+//	std::chrono::steady_clock::time_point begin = std::chrono::steady_clock::now();
+//	std::ofstream fout("Models/Etabs_copy.txt");
+//
+//	UINT vcount = 0;
+//	UINT lcount = 0;
+//
+//	UINT Story_Count = 0;
+//	UINT Pt_Count = 0;
+//	UINT Pt_Total = 0;
+//	UINT Line_Count = 0;
+//	UINT LineAss_Count = 0;
+//	UINT MP_Count = 0;
+//
+//	std::deque<Story> story;
+//	std::deque<MaterialProp> materialprop;
+//	std::deque<PointCoord> pointcoord;
+//	std::vector <std::vector<Point3D>> point3d;
+//
+//	std::deque<LineConnect> lineconnect;
+//	std::deque<LineAssign> lineassign;
+//
+//	XMFLOAT3 vMinf3(+MathHelper::Infinity, +MathHelper::Infinity, +MathHelper::Infinity);
+//	XMFLOAT3 vMaxf3(-MathHelper::Infinity, -MathHelper::Infinity, -MathHelper::Infinity);
+//	XMVECTOR vMin = DirectX::XMLoadFloat3(&vMinf3);
+//	XMVECTOR vMax = DirectX::XMLoadFloat3(&vMaxf3);
+//
+//	OPENFILENAME ofn;
+//	wchar_t FileNameTXT[250];
+//	//Initialize OPENFILENAME
+//	ZeroMemory(&ofn, sizeof(ofn));
+//	ofn.lStructSize = sizeof(ofn);                                              //size of structure
+//	ofn.hwndOwner = 0;                                                       //parent window
+//	ofn.lpstrFile = NULL;                                                       //path of open file is ofn.lpstrFile, short in szFile
+//	ofn.lpstrFileTitle = FileNameTXT;                                            //Name of File
+//	ofn.nMaxFile = sizeof(ofn);
+//	ofn.lpstrFilter = L"ALL\0*.*\0Text\0*.TXT\0*.DOC\0*.BAK";
+//	ofn.nFilterIndex = 1;
+//	ofn.nMaxFileTitle = sizeof(ofn);
+//	ofn.lpstrInitialDir = NULL;
+//	ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+//
+//	if (!GetOpenFileName(&ofn))
+//	{
+//		MessageBox(0, L"Get Open File Name Failed", L"FBI WARNING", MB_OK);
+//	}
+//	else
+//	{
+//
+//		std::string TextHandler;
+//		std::ifstream SM_read(FileNameTXT);
+//
+//		if (!SM_read.is_open()) {
+//			MessageBox(0, L"Import Models.txt Failed.", 0, 0);
+//		}
+//		else
+//		{
+//			while (std::getline(SM_read, TextHandler))
+//			{
+//				std::istringstream iss;
+//				std::string skip;
+//
+//				auto Story_pos = TextHandler.find(" STORY ");
+//				if (Story_pos != std::string::npos)
+//				{
+//					iss.str(TextHandler);
+//					Story st;
+//					if (iss >> skip >> st.StoryName >> skip >> st.StoryHeight)
+//						story.emplace_back(std::move(st));	//move: move into and delete the original 
+//				}
+//
+//				auto Pt_pos = TextHandler.find("  POINT ");
+//				if (Pt_pos != std::string::npos)
+//				{
+//					iss.str(TextHandler);
+//					PointCoord pt;
+//					if (iss >> skip >> pt.PtName >> pt.PtX >> pt.PtY)
+//						pointcoord.emplace_back(std::move(pt));
+//				}
+//
+//				auto Line_pos = TextHandler.find("  LINE  ");
+//				if (Line_pos != std::string::npos)
+//				{
+//					iss.str(TextHandler);
+//					LineConnect lc;
+//					if (iss >> skip >> lc.LineName
+//						>> lc.LineType >> lc.LineStart
+//						>> lc.LineEnd >> lc.SpanFloor)
+//						lineconnect.emplace_back(std::move(lc));
+//				}
+//
+//				auto LineAss_pos = TextHandler.find(" LINEASSIGN ");
+//				if (LineAss_pos != std::string::npos)
+//				{
+//					iss.str(TextHandler);
+//					LineAssign la;
+//					if (iss >> skip >> la.LineName >> la.Story)
+//						lineassign.emplace_back(std::move(la));
+//				}
+//
+//			}//end of while
+//		}
+//		SM_read.close();
+//	}// end reading
+//
+//	Story_Count = story.size();
+//	float BaseLevel = story.back().StoryHeight;
+//	story.back().TotalHeight = story.back().StoryHeight;	//1st element
+//	for (UINT i = 1; i < story.size(); i++)					//except for 1st element
+//	{
+//		story[story.size() - 1 - i].TotalHeight = story[story.size() - i].TotalHeight + story[story.size() - 1 - i].StoryHeight;
+//	}
+//
+//	Pt_Count = pointcoord.size();
+//	Pt_Total = pointcoord.size() * story.size();
+//	LineAss_Count = lineassign.size();
+//
+//	vcount = Pt_Total;
+//	lcount = LineAss_Count;
+//
+//	//expand 2D container points to 3D
+//	point3d.resize(story.size(), vector<Point3D>(pointcoord.size()));
+//	for (UINT i = 0; i < story.size(); i++)
+//	{
+//		for (UINT j = 0; j < pointcoord.size(); j++)
+//		{
+//			point3d[i][j].PtName = pointcoord[j].PtName;
+//			point3d[i][j].PtX = pointcoord[j].PtX;
+//			point3d[i][j].PtY = pointcoord[j].PtY;
+//			point3d[i][j].PtZ = story[i].TotalHeight;
+//		}
+//	}
+//
+//	//matching line connectivity to line assignment 
+//	std::vector <Vertex::Basic32> vertices(vcount);		//1 vertex for each pt
+//	std::vector <LineDirectx> linedirectx(lcount);
+//
+//	for (UINT i = 0; i < Story_Count; i++)
+//	{
+//		for (UINT j = 0; j < Pt_Count; j++)
+//		{
+//			vertices[i * Pt_Count + j].Pt_Num = point3d[i][j].PtName;
+//			vertices[i * Pt_Count + j].Pos.x = point3d[i][j].PtX;
+//			vertices[i * Pt_Count + j].Pos.y = point3d[i][j].PtY;
+//			vertices[i * Pt_Count + j].Pos.z = point3d[i][j].PtZ;
+//			vertices[i * Pt_Count + j].Normal.x = 0;
+//			vertices[i * Pt_Count + j].Normal.y = 0;
+//			vertices[i * Pt_Count + j].Normal.z = 1;
+//
+//			XMVECTOR P = DirectX::XMLoadFloat3(&vertices[i * Pt_Count + j].Pos);
+//			vMin = XMVectorMin(vMin, P);
+//			vMax = XMVectorMax(vMax, P);
+//		}
+//	}
+//
+//	//Initial Camera Setting
+//	DirectX::XMStoreFloat3(&mSkullBox.Center, 0.5f * (vMin + vMax));
+//	DirectX::XMStoreFloat3(&mSkullBox.Extents, 0.5f * (vMax - vMin));
+//
+//	//遍历全部，共计lcount 条 linedirectx
+//	for (UINT i = 0; i < lcount; ++i)
+//	{
+//		//get line floor inedex in vector Story[]
+//		UINT pos_story = 0;
+//		std::string Search_story = lineassign[i].Story;
+//		auto _predicate_s = [Search_story](const Story& item)
+//		{
+//			return item.StoryName == Search_story;
+//		};
+//		auto itr = std::find_if(std::begin(story), std::end(story), _predicate_s);
+//		if (itr >= std::end(story))
+//		{
+//			MessageBox(0, L"Can't match Line's Story", L"Warning", MB_OK);
+//		}
+//		else
+//		{
+//			pos_story = std::distance(story.begin(), itr);
+//		}
+//
+//		//get line index in vector LinePtr[]
+//		UINT pos_lineconnect = 0;
+//		std::string Search_lincct = lineassign[i].LineName;
+//		auto _predicate_l = [Search_lincct](const LineConnect& item) {
+//			return item.LineName == Search_lincct;
+//		};
+//		auto itr_l = std::find_if(std::begin(lineconnect), std::end(lineconnect), _predicate_l);
+//		if (itr_l >= std::end(lineconnect)) {
+//			MessageBox(0, L"Can't match Line's Story, Close the App", L"Warning", MB_OK);
+//		}
+//		else {
+//			pos_lineconnect = std::distance(lineconnect.begin(), itr_l);
+//		}
+//
+//		lineassign[i].LineStart = lineconnect[pos_lineconnect].LineStart;
+//		lineassign[i].LineEnd = lineconnect[pos_lineconnect].LineEnd;
+//		lineassign[i].SpanFloor = lineconnect[pos_lineconnect].SpanFloor;
+//
+//		linedirectx[i].LineName = lineassign[i].LineName;
+//		linedirectx[i].Story = lineassign[i].Story;
+//		linedirectx[i].LineStart = lineassign[i].LineStart;
+//		linedirectx[i].LineEnd = lineassign[i].LineEnd;
+//		linedirectx[i].SpanFloor = lineassign[i].SpanFloor;
+//
+//		UINT pos_pt1 = 0;
+//		//search point p1 in Vertex::Basic32
+//		std::string Search_p1 = linedirectx[i].LineStart;
+//		auto _predicate_p1 = [Search_p1](const Vertex::Basic32& item) {
+//			return item.Pt_Num == Search_p1;
+//		};
+//		auto itr_p1 = std::find_if(std::begin(vertices), std::end(vertices), _predicate_p1);
+//		if (itr_p1 >= std::end(vertices)) {
+//			MessageBox(0, L"Can't match Line's Start Point, Close the App", L"Warning", MB_OK);
+//		}
+//		else {
+//			pos_pt1 = std::distance(vertices.begin(), itr_p1);
+//		}
+//		linedirectx[i].LineSIndex = pos_story * Pt_Count + pos_pt1;
+//
+//		UINT pos_pt2 = 0;
+//		std::string Search_p2 = linedirectx[i].LineEnd;
+//		auto _predicate_p2 = [Search_p2](const Vertex::Basic32& item) {
+//			return item.Pt_Num == Search_p2;
+//		};
+//		auto itr_p2 = std::find_if(std::begin(vertices), std::end(vertices), _predicate_p2);
+//		if (itr_p2 >= std::end(vertices)) {
+//			MessageBox(0, L"Can't match Line's Start Point, Close the App", L"Warning", MB_OK);
+//		}
+//		else {
+//			pos_pt2 = std::distance(vertices.begin(), itr_p2);
+//		}
+//		//line的EndPt在vertex中的总索引 = （起始层 - 跨层数）x 每层点总数 + EndPt 当层的索引
+//		linedirectx[i].LineEIndex = (pos_story - linedirectx[i].SpanFloor) * Pt_Count + pos_pt2;
+//	}
+//
+//	mIndexCount = 2 * lcount;		//points to reder are twice of lines
+//	std::vector<UINT> indices(mIndexCount);
+//	for (UINT i = 0; i < lcount; ++i)
+//	{
+//		indices[i * 2 + 0] = linedirectx[i].LineSIndex;
+//		indices[i * 2 + 1] = linedirectx[i].LineEIndex;
+//	}
+//
+//
+//	fout << '\n' << "Materials" << endl;
+//	for (UINT i = 0; i < materialprop.size(); ++i)
+//	{
+//		fout << materialprop[i].Name << " " << materialprop[i].Mass << " "
+//			<< materialprop[i].Weight << " " << materialprop[i].ModulusE << " "
+//			<< materialprop[i].PossionR << std::endl;
+//	}
+//
+//	fout << '\n' << "Story: NOS = " << story.size() << endl;
+//	for (UINT i = 0; i < story.size(); ++i)
+//	{
+//		fout << story[i].StoryName << " Height " << story[i].StoryHeight
+//			<< " mPD = " << story[i].TotalHeight << endl;
+//	}
+//
+//	fout << '\n' << "Points Coordinates: " << pointcoord.size() << endl;
+//	for (UINT i = 0; i < story.size(); i++)
+//	{
+//		for (UINT j = 0; j < pointcoord.size(); j++)
+//		{
+//			fout << " PtName: " << point3d[i][j].PtName
+//				<< " @ Floor: " << story[i].StoryName
+//				<< " X: " << point3d[i][j].PtX
+//				<< " Y: " << point3d[i][j].PtY
+//				<< " Z: " << point3d[i][j].PtZ << endl;
+//		}
+//	}
+//
+//	fout << '\n' << "LINE Connectivity: NOS = " << Line_Count << endl;
+//	for (UINT i = 0; i < lcount; ++i)
+//	{
+//		fout << linedirectx[i].LineName << " @ Floor " << linedirectx[i].Story << endl;
+//		fout << linedirectx[i].LineStart << " LineSIndex = " << linedirectx[i].LineSIndex << endl;
+//		fout << linedirectx[i].LineEnd << " LineEIndex = " << linedirectx[i].LineEIndex << endl;
+//	}
+//
+//	fout << '\n' << "LINE Assignment: NOS = " << lineassign.size() << endl;
+//	for (UINT i = 0; i < lineassign.size(); ++i)
+//	{
+//		fout << lineassign[i].LineName << " " << lineassign[i].LineStart << " " << lineassign[i].LineEnd << " " << lineassign[i].Story << endl;
+//	}
+//
+//	std::chrono::steady_clock::time_point end = std::chrono::steady_clock::now();
+//	__int64 time_sec = (std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count()); //can use chrono::microseconds>
+//	fout << "Time elapsed = " << time_sec / 1000 << " s " << std::endl;
+//	fout.close();
+//
+//	//performance testing
+//	float ImportDLLLfread_Elapsed = (float(clock() - ImportDLLLfread_Start) / CLOCKS_PER_SEC);
+//	std::wstringstream wtss(L"");
+//	wtss << "Loading Read & Write Done in " << ImportDLLLfread_Elapsed << " s ";
+//	MessageBox(NULL, wtss.str().c_str(), L"MsgBox", MB_OK);
+//
+//	D3D11_BUFFER_DESC vbd;
+//	vbd.Usage = D3D11_USAGE_IMMUTABLE;
+//	vbd.ByteWidth = sizeof(Vertex::Basic32) * vcount;
+//	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
+//	vbd.CPUAccessFlags = 0;
+//	vbd.MiscFlags = 0;
+//	D3D11_SUBRESOURCE_DATA vinitData;
+//	vinitData.pSysMem = &vertices[0];
+//	ThrowIfFailed(md3dDevice->CreateBuffer(&vbd, &vinitData, &mTargetVB));
+//
+//	// 
+//	// Pack the indices of all the meshes into one index buffer.
+//	//
+//	D3D11_BUFFER_DESC ibd;
+//	ibd.Usage = D3D11_USAGE_IMMUTABLE;
+//	ibd.ByteWidth = sizeof(UINT) * mIndexCount;
+//	ibd.BindFlags = D3D11_BIND_INDEX_BUFFER;
+//	ibd.CPUAccessFlags = 0;
+//	ibd.MiscFlags = 0;
+//	D3D11_SUBRESOURCE_DATA iinitData;
+//	iinitData.pSysMem = &indices[0];
+//	ThrowIfFailed(md3dDevice->CreateBuffer(&ibd, &iinitData, &mTargetIB));
+//}
 
 void OptimMain::FdtGeometryBuffers()
 {

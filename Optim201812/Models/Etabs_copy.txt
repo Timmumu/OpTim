@@ -72168,4 +72168,4 @@ LINE Assignment: NOS = 8679
 "B913" "518" "1145" "MF"
 "B487" "828" "811" "MF"
 "B33" "1323" "1381" "MF"
-Time elapsed = 5 s 
+Time elapsed = 7 s 

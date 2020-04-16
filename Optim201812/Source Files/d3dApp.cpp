@@ -267,6 +267,16 @@ void D3DApp::OnResize()
 	md3dImmediateContext->RSSetViewports(1, &mScreenViewport);
 }
 
+void D3DApp::PlanView()
+{
+
+}
+
+void D3DApp::ThreeDimView()
+{
+
+}
+
 // Forward declare message handler from imgui_impl_win32.cpp
 extern IMGUI_IMPL_API LRESULT ImGui_ImplWin32_WndProcHandler(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam);
 
@@ -416,7 +426,7 @@ LRESULT D3DApp::ChildMsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPar
    			break;
 
 		case IDM_ImportE2k:
-			StructureGeometryBuffers();
+			ImportE2k();
 			break;
 
 		case IDM_ImportDLLL:
@@ -619,7 +629,7 @@ LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			break;
 		}
 		case IDM_ImportE2k:
-			StructureGeometryBuffers();
+			ImportE2k();
 			break;
 
 		case IDM_ImportDLLL:

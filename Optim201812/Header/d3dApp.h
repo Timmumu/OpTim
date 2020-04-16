@@ -28,12 +28,15 @@ public:
 	virtual bool Init() = 0;
 	virtual void OnResize() = 0;
 
+	virtual void PlanView() = 0;			//default make it Base Floor
+	virtual void ThreeDimView() = 0;			//once clicked, recover to 3D view
+
 	virtual void DrawImgui() = 0;
 	virtual void UpdateScene(float dt) = 0;
 	virtual void DrawScene() = 0;
  
 	virtual void BuildGeometryBuffers() = 0;		//car geometry
-	virtual void StructureGeometryBuffers() = 0;
+	virtual void ImportE2k() = 0;				//assign value to vertex and create vertex buffer
 	virtual void FdtGeometryBuffers() = 0;
 
 	virtual void ImportDLLL() = 0;
@@ -54,8 +57,10 @@ public:
 	void EnableImgui() noexcept;
 	void DisableImgui() noexcept;
 	bool IsImguiEnabled() const noexcept;
-
+	
 	bool imguiEnabled = true;
+
+
 
 
 protected:
@@ -106,4 +111,6 @@ protected:
 
 	float slider1 = 0.0f;
 	unsigned int ButtonCounter1 = 0;
+	unsigned int PlanViewClicked = 0;
+
 };
