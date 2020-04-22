@@ -48,9 +48,6 @@
     <ClInclude Include="Header\d3dUtil.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="Header\GameTimer.h">
-      <Filter>Header Files</Filter>
-    </ClInclude>
     <ClInclude Include="Header\GeometryGenerator.h">
       <Filter>Header Files</Filter>
     </ClInclude>
@@ -95,6 +92,12 @@
     </ClInclude>
     <ClInclude Include="imgui\imstb_textedit.h">
       <Filter>imgui</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\AppTimer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="Header\DXTrace.h">
+      <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
   <ItemGroup>
@@ -149,6 +152,9 @@
     <ClCompile Include="imgui\ImguiManager.cpp">
       <Filter>imgui</Filter>
     </ClCompile>
+    <ClCompile Include="Common\DXTrace.cpp">
+      <Filter>Common</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <Image Include="Resource Files\small.ico">
@@ -168,7 +174,6 @@
     <None Include="FX\InstancedBasic.fxo">
       <Filter>FX</Filter>
     </None>
-    <None Include="Resource Files\Optim.aps" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="FX\InstancedBasic.fx">

@@ -1,11 +1,11 @@
 //***************************************************************************************
-// GameTimer.cpp by Frank Luna (C) 2011 All Rights Reserved.
+// AppTimer.cpp by Frank Luna (C) 2011 All Rights Reserved.
 //***************************************************************************************
 
 #include <windows.h>
-#include "GameTimer.h"
+#include "AppTimer.h"
 
-GameTimer::GameTimer()
+AppTimer::AppTimer()
 	: mSecondsPerCount(0.0), mDeltaTime(-1.0), mBaseTime(0),
 	mPausedTime(0), mPrevTime(0), mCurrTime(0), mStopped(false)
 {
@@ -16,7 +16,7 @@ GameTimer::GameTimer()
 
 // Returns the total time elapsed since Reset() was called, NOT counting any
 // time when the clock is stopped.
-float GameTimer::TotalTime()const
+float AppTimer::TotalTime()const
 {
 	// If we are stopped, do not count the time that has passed since we stopped.
 	// Moreover, if we previously already had a pause, the distance 
@@ -48,12 +48,12 @@ float GameTimer::TotalTime()const
 	}
 }
 
-float GameTimer::DeltaTime()const
+float AppTimer::DeltaTime()const
 {
 	return (float)mDeltaTime;
 }
 
-void GameTimer::Reset()
+void AppTimer::Reset()
 {
 	__int64 currTime;
 	QueryPerformanceCounter((LARGE_INTEGER*)&currTime);
@@ -64,7 +64,7 @@ void GameTimer::Reset()
 	mStopped = false;
 }
 
-void GameTimer::Start()
+void AppTimer::Start()
 {
 	__int64 startTime;
 	QueryPerformanceCounter((LARGE_INTEGER*)&startTime);
@@ -86,7 +86,7 @@ void GameTimer::Start()
 	}
 }
 
-void GameTimer::Stop()
+void AppTimer::Stop()
 {
 	if (!mStopped)
 	{
@@ -98,7 +98,7 @@ void GameTimer::Stop()
 	}
 }
 
-void GameTimer::Tick()
+void AppTimer::Tick()
 {
 	if (mStopped)
 	{

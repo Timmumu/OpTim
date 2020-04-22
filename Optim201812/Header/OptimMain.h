@@ -7,6 +7,7 @@
 #include <malloc.h>
 #include <memory.h>
 #include <tchar.h>
+#include <wrl.h>		//for smart pointer ComPtr
 
 #include <vector>
 #include <deque> // for std::deque
