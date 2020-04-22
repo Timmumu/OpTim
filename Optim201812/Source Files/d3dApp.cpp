@@ -108,18 +108,20 @@ D3DApp::~D3DApp()
 {
 	//destructor, remember to destroy created class
 	//if (mRenderTargetView) mRenderTargetView->Release();
+	
 	DestroyWindow(mhMainWnd);
-	ReleaseCom(mRenderTargetView);
-	ReleaseCom(mDepthStencilView);
-	ReleaseCom(mSwapChain);
-	ReleaseCom(mDepthStencilBuffer);
+	
+	//ReleaseCom(mRenderTargetView);
+	//ReleaseCom(mDepthStencilView);
+	//ReleaseCom(mSwapChain);
+	//ReleaseCom(mDepthStencilBuffer);
 
 	// Restore all default settings.
 	if (md3dImmediateContext)
 		md3dImmediateContext->ClearState();
 
-	ReleaseCom(md3dImmediateContext);
-	ReleaseCom(md3dDevice);
+	//ReleaseCom(md3dImmediateContext);
+	//ReleaseCom(md3dDevice);
 }
 
 HINSTANCE D3DApp::AppInst()const
@@ -141,7 +143,7 @@ float D3DApp::AspectRatio()const
 int D3DApp::Run()
 {
 	MSG msg = { 0 };
-	mTimer.Reset();
+	mTimer.Reset();		//function defined in AppTimer to reset time
 
 	//
 	while (msg.message != WM_QUIT)
@@ -203,18 +205,25 @@ void D3DApp::OnResize()
 	// Release the old views, as they hold references to the buffers we
 	// will be destroying.  Also release the old depth/stencil buffer.
 
-	ReleaseCom(mRenderTargetView);
-	ReleaseCom(mDepthStencilView);
-	ReleaseCom(mDepthStencilBuffer);
+	//ReleaseCom(mRenderTargetView);
+	//ReleaseCom(mDepthStencilView);
+	//ReleaseCom(mDepthStencilBuffer);
+	
+	// 释放渲染管线输出用到的相关资源 
+	// .Reset(): 该方法对里面的实例调用Release方法，并将指针置为nullptr
+	mRenderTargetView.Reset();		
+	mDepthStencilView.Reset();
+	mDepthStencilBuffer.Reset();
 
 	// Resize the swap chain and recreate the render target view.
-	// (*mSwapChain).ResizeBuffers
+	// 重设交换链并且重新创建渲染目标视图
+	ComPtr<ID3D11Texture2D> backBuffer;
 	ThrowIfFailed(mSwapChain->ResizeBuffers(1, mClientWidth, mClientHeight, DXGI_FORMAT_R8G8B8A8_UNORM, 0));
-	ID3D11Texture2D* backBuffer = 0;
-	ThrowIfFailed(mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(&backBuffer)));
-	ThrowIfFailed(md3dDevice->CreateRenderTargetView(backBuffer, 0, &mRenderTargetView));
+	ThrowIfFailed(mSwapChain->GetBuffer(0, __uuidof(ID3D11Texture2D), reinterpret_cast<void**>(backBuffer.GetAddressOf())));
+	ThrowIfFailed(md3dDevice->CreateRenderTargetView(backBuffer.Get(), 0, mRenderTargetView.GetAddressOf()));
 
-	ReleaseCom(backBuffer);
+	backBuffer.Reset();
+	//ReleaseCom(backBuffer);
 
 	// Create the depth/stencil buffer and view.
 	D3D11_TEXTURE2D_DESC depthStencilDesc;
@@ -242,8 +251,8 @@ void D3DApp::OnResize()
 	depthStencilDesc.CPUAccessFlags = 0;
 	depthStencilDesc.MiscFlags = 0;
 
-	ThrowIfFailed(md3dDevice->CreateTexture2D(&depthStencilDesc, 0, &mDepthStencilBuffer));
-
+	ThrowIfFailed(md3dDevice->CreateTexture2D(&depthStencilDesc, 0, mDepthStencilBuffer.GetAddressOf()));
+ 
 	// Create the depth stencil view
 /*
 	D3D11_DEPTH_STENCIL_VIEW_DESC descDSV;
@@ -251,11 +260,11 @@ void D3DApp::OnResize()
 	descDSV.Format = depthStencilDesc.Format;
 	descDSV.ViewDimension = D3D11_DSV_DIMENSION_TEXTURE2D;
 	descDSV.Texture2D.MipSlice = 0;*/
-	ThrowIfFailed(md3dDevice->CreateDepthStencilView(mDepthStencilBuffer, 0, &mDepthStencilView));
-
+	
+	ThrowIfFailed(md3dDevice->CreateDepthStencilView(mDepthStencilBuffer.Get(), 0, mDepthStencilView.GetAddressOf()));
+ 
 	// Bind the render target view and depth/stencil view to the pipeline.
-
-	md3dImmediateContext->OMSetRenderTargets(1, &mRenderTargetView, mDepthStencilView);
+	md3dImmediateContext->OMSetRenderTargets(1, mRenderTargetView.GetAddressOf(), mDepthStencilView.Get());
 
 	// Set the viewport transform.
 	mScreenViewport.TopLeftX = 120;
@@ -672,7 +681,7 @@ LRESULT D3DApp::MsgProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 	return 0;
 }
 
-bool D3DApp::InitMainWindow()
+bool D3DApp::InitMainWindow()		//parent and child windows created here
 {
 	// Register class
 	WNDCLASSEX wcex;
@@ -769,18 +778,18 @@ bool D3DApp::InitDirect3D()
 	// Create the device and device context.
 	UINT createDeviceFlags = 0;
 #if defined(DEBUG) || defined(_DEBUG)  
-	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;
+	createDeviceFlags |= D3D11_CREATE_DEVICE_DEBUG;		//enable debug to lunch hlsl debugger
 #endif
 
 	D3D_FEATURE_LEVEL featureLevel;
 	HRESULT hr = D3D11CreateDevice(
-		0,                 // default adapter
+		0,						// default adapter
 		md3dDriverType,
-		0,                 // no software device
+		0,						// no software device
 		createDeviceFlags,
-		0, 0,              // default feature level array
+		0, 0,					// default feature level array
 		D3D11_SDK_VERSION,
-		&md3dDevice,
+		md3dDevice.GetAddressOf(),	//or &md3dDevice
 		&featureLevel,
 		&md3dImmediateContext);
 
@@ -846,22 +855,26 @@ bool D3DApp::InitDirect3D()
 	// (by calling CreateDXGIFactory), we get an error: "IDXGIFactory::CreateSwapChain: 
 	// This function is being called with a device from a different IDXGIFactory."
 
-	IDXGIDevice* dxgiDevice = 0;
-	ThrowIfFailed(md3dDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)& dxgiDevice));
+	ComPtr<IDXGIDevice> dxgiDevice = nullptr;
+	ComPtr<IDXGIAdapter> dxgiAdapter = nullptr;
+	ComPtr<IDXGIFactory> dxgiFactory = nullptr;
 
-	IDXGIAdapter* dxgiAdapter = 0;
-	ThrowIfFailed(dxgiDevice->GetParent(__uuidof(IDXGIAdapter), (void**)& dxgiAdapter));
+	//QueryInterface no longer available for ComPtr. use .As()
+	//ThrowIfFailed(md3dDevice->QueryInterface(__uuidof(IDXGIDevice), (void**)& dxgiDevice));
+	ThrowIfFailed(md3dDevice.As(&dxgiDevice));
+	ThrowIfFailed(dxgiDevice->GetAdapter(dxgiAdapter.GetAddressOf()));
+	ThrowIfFailed(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), reinterpret_cast<void**> (dxgiFactory.GetAddressOf())));
 
-	IDXGIFactory* dxgiFactory = 0;
-	ThrowIfFailed(dxgiAdapter->GetParent(__uuidof(IDXGIFactory), (void**)& dxgiFactory));
+	ThrowIfFailed(dxgiFactory->CreateSwapChain(md3dDevice.Get(), &sd, mSwapChain.GetAddressOf()));
 
-	ThrowIfFailed(dxgiFactory->CreateSwapChain(md3dDevice, &sd, &mSwapChain));
-
-	ReleaseCom(dxgiDevice);
+	/*ReleaseCom(dxgiDevice);	
 	ReleaseCom(dxgiAdapter);
-	ReleaseCom(dxgiFactory);
-
-	// The remaining steps that need to be carried out for d3d creation
+	ReleaseCom(dxgiFactory);*/
+	dxgiDevice.Reset();
+	dxgiAdapter.Reset();
+	dxgiFactory.Reset();
+	
+		// The remaining steps that need to be carried out for d3d creation
 	// also need to be executed every time the window is resized.  So
 	// just call the OnResize method here to avoid code duplication.
 
@@ -891,7 +904,7 @@ bool D3DApp::InitImgui()
 
 	// Setup Platform/Renderer bindings
 	ImGui_ImplWin32_Init(DirectHwnd);
-	ImGui_ImplDX11_Init(md3dDevice, md3dImmediateContext);
+	ImGui_ImplDX11_Init(md3dDevice.Get(), md3dImmediateContext.Get());
 	return true;
 }
 

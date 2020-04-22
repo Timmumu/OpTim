@@ -24,6 +24,7 @@
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>Optim201812</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>OpTim</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">
@@ -220,8 +221,9 @@
     <ClInclude Include="Header\d3dApp.h" />
     <ClInclude Include="Header\d3dUtil.h" />
     <ClInclude Include="Header\d3dx11effect.h" />
+    <ClInclude Include="Header\DXTrace.h" />
     <ClInclude Include="Header\Effects.h" />
-    <ClInclude Include="Header\GameTimer.h" />
+    <ClInclude Include="Header\AppTimer.h" />
     <ClInclude Include="Header\GeometryGenerator.h" />
     <ClInclude Include="Header\LightHelper.h" />
     <ClInclude Include="Header\MathHelper.h" />
@@ -253,6 +255,7 @@
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|x64'">NotUsing</PrecompiledHeader>
     </ClCompile>
+    <ClCompile Include="Common\DXTrace.cpp" />
     <ClCompile Include="Common\GameTimer.cpp">
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">NotUsing</PrecompiledHeader>
       <PrecompiledHeader Condition="'$(Configuration)|$(Platform)'=='Release|Win32'">NotUsing</PrecompiledHeader>
@@ -319,7 +322,6 @@
   <ItemGroup>
     <None Include="FX\InstancedBasic.cod" />
     <None Include="FX\InstancedBasic.fxo" />
-    <None Include="Resource Files\Optim.aps" />
   </ItemGroup>
   <ItemGroup>
     <FxCompile Include="FX\InstancedBasic.fx" />

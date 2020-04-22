@@ -1,14 +1,14 @@
 //***************************************************************************************
-// GameTimer.h by Frank Luna (C) 2011 All Rights Reserved.
+// AppTimer.h by Frank Luna (C) 2011 All Rights Reserved.
 //***************************************************************************************
 
-#ifndef GAMETIMER_H
-#define GAMETIMER_H
+#ifndef APPTIMER_H
+#define APPTIMER_H
 
-class GameTimer
+class AppTimer
 {
 public:
-	GameTimer();
+	AppTimer();
 
 	float TotalTime()const;  // in seconds
 	float DeltaTime()const; // in seconds
@@ -31,4 +31,4 @@ private:
 	bool mStopped;
 };
 
-#endif // GAMETIMER_H
+#endif		// AppTimer_H

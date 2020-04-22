@@ -24,10 +24,10 @@
 #include "Camera.h"
 #include "xnacollision.h"
 
-#pragma warning(disable:4996)	//This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
+#pragma warning(disable:4996)			//This function or variable may be unsafe': strcpy, strdup, sprintf, vsnprintf, sscanf, fopen
+#pragma warning(disable:4189)			//warning C4189:  'lcount': local variable is initialized but not referenced
 
 using namespace std;
-
 
 //用struct定义派生类，默认的继承方式为public
 struct InstancedData
@@ -104,13 +104,14 @@ private:
 	void ThreeDimView();
 
 private:
-	ID3D11Buffer* mTargetVB = 0;
-	ID3D11Buffer* mTargetIB = 0;
-	ID3D11Buffer* mInstancedBuffer = 0;			//for 动态缓冲
+	ComPtr<ID3D11Buffer> mTargetVB = 0;
+	ComPtr<ID3D11Buffer> mTargetIB = 0;
+	ComPtr<ID3D11Buffer> mInstancedBuffer = 0;			//for instancing to save computation
 
-	ID3D11Buffer* mCarVB = 0;
-	ID3D11Buffer* mCarIB = 0;
+	ComPtr<ID3D11Buffer> mCarVB = 0;
+	ComPtr<ID3D11Buffer> mCarIB = 0;
 
+	//ComPtr<ID3D11Buffer> 
 	// Bounding box of the skull.
 	XNA::AxisAlignedBox mSkullBox;
 	XNA::Frustum mCamFrustum;
@@ -199,11 +200,11 @@ OptimMain::OptimMain(HINSTANCE hInstance)
 
 OptimMain::~OptimMain()
 {
-	ReleaseCom(mTargetVB);
-	ReleaseCom(mTargetIB);
-	ReleaseCom(mInstancedBuffer);
-	ReleaseCom(mCarVB);
-	ReleaseCom(mCarIB);
+	//ReleaseCom(mTargetVB);
+	//ReleaseCom(mTargetIB);
+	//ReleaseCom(mInstancedBuffer);
+	//ReleaseCom(mCarVB);
+	//ReleaseCom(mCarIB);
 
 	Effects::DestroyAll();
 	InputLayouts::DestroyAll();
@@ -218,8 +219,8 @@ bool OptimMain::Init()
 	}
 
 	// Must init Effects in prior to InputLayouts, the later depends on Effects' shader signatures.
-	Effects::InitAll(md3dDevice);
-	InputLayouts::InitAll(md3dDevice);
+	Effects::InitAll(md3dDevice.Get());
+	InputLayouts::InitAll(md3dDevice.Get());
 
 	BuildInstancedBuffer();
 
@@ -237,25 +238,28 @@ void OptimMain::OnResize()
 }
 
 void OptimMain::UpdateScene(float dt)
-{
+{	
+	// 更新鼠标事件，获取相对偏移量
+
+
 	// Control the camera. use W,S,A,D to Translation
 	if (GetAsyncKeyState('W') & 0x8000)
-		mCam.Walk(500.0f * dt);				//mCam.Walk: zoom in and out
+		mCam.Walk(-500.0f * dt);				//mCam.Walk: zoom in and out
 	if (GetAsyncKeyState('S') & 0x8000)
-		mCam.Walk(-500.0f * dt);
+		mCam.Walk(500.0f * dt);
 	if (GetAsyncKeyState('A') & 0x8000)
-		mCam.RightLeft(500.0f * dt);
-	if (GetAsyncKeyState('D') & 0x8000)
 		mCam.RightLeft(-500.0f * dt);
+	if (GetAsyncKeyState('D') & 0x8000)
+		mCam.RightLeft(500.0f * dt);
 	if (GetAsyncKeyState('1') & 0x8000)
 		mFrustumCullingEnabled = true;
 	if (GetAsyncKeyState('2') & 0x8000)
 		mFrustumCullingEnabled = false;
 
 	if (GetAsyncKeyState(VK_UP) & 0x8000)
-		mCam.UpDown(500.0f * dt);			//mCam.UpDown: translate up and down
+		mCam.UpDown(-500.0f * dt);			//mCam.UpDown: translate up and down
 	if (GetAsyncKeyState(VK_DOWN) & 0x8000)
-		mCam.UpDown(-500.0f * dt);		
+		mCam.UpDown(500.0f * dt);		
 	if (GetAsyncKeyState(VK_LEFT) & 0x8000)
 		mCam.RightLeft(-500.0f * dt);		//translate left and right
 	if (GetAsyncKeyState(VK_RIGHT) & 0x8000)
@@ -284,7 +288,7 @@ void OptimMain::UpdateScene(float dt)
 		XMMATRIX invView = DirectX::XMMatrixInverse(&detView, mCam.View());
 
 		D3D11_MAPPED_SUBRESOURCE mappedData;
-		md3dImmediateContext->Map(mInstancedBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
+		md3dImmediateContext->Map(mInstancedBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
 
 		InstancedData* dataView = reinterpret_cast<InstancedData*>(mappedData.pData);
 
@@ -314,12 +318,12 @@ void OptimMain::UpdateScene(float dt)
 				dataView[mVisibleObjectCount++] = mInstancedData[i];
 			}
 		}
-		md3dImmediateContext->Unmap(mInstancedBuffer, 0);
+		md3dImmediateContext->Unmap(mInstancedBuffer.Get(), 0);
 	}
 	else // No culling enabled, draw all objects.
 	{
 		D3D11_MAPPED_SUBRESOURCE mappedData;
-		md3dImmediateContext->Map(mInstancedBuffer, 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
+		md3dImmediateContext->Map(mInstancedBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedData);
 
 		InstancedData* dataView = reinterpret_cast<InstancedData*>(mappedData.pData);
 
@@ -327,7 +331,7 @@ void OptimMain::UpdateScene(float dt)
 		{
 			dataView[mVisibleObjectCount++] = mInstancedData[i];
 		}
-		md3dImmediateContext->Unmap(mInstancedBuffer, 0);
+		md3dImmediateContext->Unmap(mInstancedBuffer.Get(), 0);
 	}
 
 	std::wostringstream outs;
@@ -431,8 +435,8 @@ void OptimMain::DrawImgui()
 
 void OptimMain::DrawScene()
 {
-	md3dImmediateContext->ClearRenderTargetView(mRenderTargetView, reinterpret_cast<const float*>(&Colors::Black));
-	md3dImmediateContext->ClearDepthStencilView(mDepthStencilView, D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
+	md3dImmediateContext->ClearRenderTargetView(mRenderTargetView.Get(), reinterpret_cast<const float*>(&Colors::Black));
+	md3dImmediateContext->ClearDepthStencilView(mDepthStencilView.Get(), D3D11_CLEAR_DEPTH | D3D11_CLEAR_STENCIL, 1.0f, 0);
 	md3dImmediateContext->IASetInputLayout(InputLayouts::InstancedBasic32);
 	md3dImmediateContext->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_LINELIST);
 
@@ -443,7 +447,7 @@ void OptimMain::DrawScene()
 	UINT stride[2] = { sizeof(Vertex::Basic32), sizeof(InstancedData) };
 	UINT offset[2] = { 0,0 };
 
-	ID3D11Buffer* vbs[2] = { mTargetVB, mInstancedBuffer };
+	ID3D11Buffer* vbs[2] = { mTargetVB.Get(), mInstancedBuffer.Get() };
 
 	XMMATRIX view = mCam.View();
 	XMMATRIX proj = mCam.Proj();
@@ -460,7 +464,7 @@ void OptimMain::DrawScene()
 	for (int32_t p = 0; p < techDesc.Passes; ++p)		//type of Passes are int32_t, be consistenet for p
 	{
 		md3dImmediateContext->IASetVertexBuffers(0, 2, vbs, stride, offset);
-		md3dImmediateContext->IASetIndexBuffer(mTargetIB, DXGI_FORMAT_R32_UINT, 0);
+		md3dImmediateContext->IASetIndexBuffer(mTargetIB.Get(), DXGI_FORMAT_R32_UINT, 0);
 
 		XMMATRIX world = DirectX::XMLoadFloat4x4(&mSkullWorld);
 		XMMATRIX worldInvTranspose = MathHelper::InverseTranspose(world);
@@ -470,17 +474,10 @@ void OptimMain::DrawScene()
 		Effects::InstancedBasicFX->SetViewProj(viewProj);
 		Effects::InstancedBasicFX->SetMaterial(mSkullMat);
 
-		activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext);
+		activeTech->GetPassByIndex(p)->Apply(0, md3dImmediateContext.Get());
 
 		//used for render each story
  		md3dImmediateContext->DrawIndexedInstanced(mIndexCount, mVisibleObjectCount, 0, 0, 0);
-		/*void DrawIndexedInstanced(
-			UINT IndexCountPerInstance,	*Number of indices read from the index buffer for each instance.
-			UINT InstanceCount,			*Number of instances to draw
-			UINT StartIndexLocation,	*The location of the first index read by the GPU from the index buffer.
-			INT  BaseVertexLocation,	*A value added to each index before reading a vertex from the vertex buffer.
-			UINT StartInstanceLocation) *A value added to each index before reading per-instance data from a vertex buffer.
-		*/
 	}
 	ThrowIfFailed(mSwapChain->Present(0, 0));
 
@@ -618,7 +615,7 @@ void OptimMain::BuildGeometryBuffers()		//loading a car_1.txt
 	vbd.MiscFlags = 0;
 	D3D11_SUBRESOURCE_DATA vinitData;
 	vinitData.pSysMem = &vertices[0];
-	ThrowIfFailed(md3dDevice->CreateBuffer(&vbd, &vinitData, &mTargetVB));
+	ThrowIfFailed(md3dDevice->CreateBuffer(&vbd, &vinitData, mTargetVB.ReleaseAndGetAddressOf()));
 
 	// 
 	// Pack the indices of all the meshes into one index buffer.
@@ -631,7 +628,7 @@ void OptimMain::BuildGeometryBuffers()		//loading a car_1.txt
 	ibd.MiscFlags = 0;
 	D3D11_SUBRESOURCE_DATA iinitData;
 	iinitData.pSysMem = &indices[0];
-	ThrowIfFailed(md3dDevice->CreateBuffer(&ibd, &iinitData, &mTargetIB));
+	ThrowIfFailed(md3dDevice->CreateBuffer(&ibd, &iinitData, mTargetIB.ReleaseAndGetAddressOf()));
 }
 
 void OptimMain::ThreeDimView()	//recover to 3D
@@ -888,7 +885,7 @@ void OptimMain::ImportE2k()			//e2k Etabs version 9.6
 		indices[i * 2 + 1] = linedirectx[i].LineEIndex;
 	}
 
-	if (NeedFout = true)
+	if (NeedFout == true)
 	{	
 		std::ofstream fout("Models/Etabs_copy.txt");
 
@@ -1583,14 +1580,14 @@ void OptimMain::BuildInstancedBuffer()	//no need instanced for the moment
 		}
 	}
 	D3D11_BUFFER_DESC vbd;
-	vbd.Usage = D3D11_USAGE_DYNAMIC;			//动态缓冲
+	vbd.Usage = D3D11_USAGE_DYNAMIC;								//动态buffer,可修改
 	vbd.ByteWidth = sizeof(InstancedData) * mInstancedData.size();
 	vbd.BindFlags = D3D11_BIND_VERTEX_BUFFER;
 	vbd.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
 	vbd.MiscFlags = 0;
 	vbd.StructureByteStride = 0;
 
-	ThrowIfFailed(md3dDevice->CreateBuffer(&vbd, 0, &mInstancedBuffer));
+	ThrowIfFailed(md3dDevice->CreateBuffer(&vbd, 0, mInstancedBuffer.GetAddressOf()));
 }
 
 bool MouseWheelUp()
